@@ -410,7 +410,7 @@ fun AppSafetyBadge(
         com.hardcoreblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> Triple(strings.inboxFilterPromo, WarningAmber.copy(alpha = 0.15f), WarningAmber)
         com.hardcoreblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL -> Triple(strings.inboxFilterOtp, PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue)
         com.hardcoreblocker.app.data.model.SmsSafetyCategory.SAFE_CONTACT -> Triple(strings.inboxFilterContacts, ShieldActive.copy(alpha = 0.15f), ShieldActive)
-        com.hardcoreblocker.app.data.model.SmsSafetyCategory.NORMAL, com.hardcoreblocker.app.data.model.SmsSafetyCategory.ALL -> Triple("Normal", DarkSurfaceVariant, TextMuted)
+        com.hardcoreblocker.app.data.model.SmsSafetyCategory.NORMAL, com.hardcoreblocker.app.data.model.SmsSafetyCategory.ALL -> Triple(strings.inboxFilterInfo, DarkSurfaceVariant, TextMuted)
     }
 
     Box(

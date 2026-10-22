@@ -43,6 +43,7 @@ enum class InboxFilter {
     THREATS_ONLY,
     PROMO_ONLY,
     OTP_ONLY,
+    INFO_ONLY,
     CONTACTS_ONLY;
 
     fun getLabel(strings: Strings): String = when (this) {
@@ -50,6 +51,7 @@ enum class InboxFilter {
         THREATS_ONLY -> strings.inboxFilterPhishing
         PROMO_ONLY -> strings.inboxFilterPromo
         OTP_ONLY -> strings.inboxFilterOtp
+        INFO_ONLY -> strings.inboxFilterInfo
         CONTACTS_ONLY -> strings.inboxFilterContacts
     }
 }
@@ -84,6 +86,9 @@ fun InboxScreen(
     val otpMessages = remember(messages) {
         messages.filter { it.category == SmsSafetyCategory.OTP_OFFICIAL }
     }
+    val infoMessages = remember(messages) {
+        messages.filter { it.category == SmsSafetyCategory.NORMAL }
+    }
     val contactMessages = remember(messages) {
         messages.filter { it.category == SmsSafetyCategory.SAFE_CONTACT }
     }
@@ -91,6 +96,7 @@ fun InboxScreen(
     val threatCount = threatMessages.size
     val promoCount = promoMessages.size
     val otpCount = otpMessages.size
+    val infoCount = infoMessages.size
     val contactCount = contactMessages.size
 
     val filteredMessages = remember(messages, selectedFilter, searchQuery, sortOrder) {
@@ -99,6 +105,7 @@ fun InboxScreen(
             InboxFilter.THREATS_ONLY -> threatMessages
             InboxFilter.PROMO_ONLY -> promoMessages
             InboxFilter.OTP_ONLY -> otpMessages
+            InboxFilter.INFO_ONLY -> infoMessages
             InboxFilter.CONTACTS_ONLY -> contactMessages
         }
         val searchFiltered = if (searchQuery.isBlank()) {
@@ -266,6 +273,18 @@ fun InboxScreen(
                     accentColor = PrimaryBlue,
                     onClick = {
                         selectedFilter = InboxFilter.OTP_ONLY
+                        selectedIds = emptySet()
+                    }
+                )
+            }
+            item {
+                AppFilterChip(
+                    label = strings.inboxFilterInfo,
+                    count = infoCount,
+                    isSelected = selectedFilter == InboxFilter.INFO_ONLY,
+                    accentColor = TextSecondary,
+                    onClick = {
+                        selectedFilter = InboxFilter.INFO_ONLY
                         selectedIds = emptySet()
                     }
                 )

@@ -56,13 +56,13 @@ fun SmsDetailBottomSheet(
         urlRegex.findAll(message.body).map { it.value.trimEnd('.', ',', ')', ';') }.toList()
     }
 
-    // Ekstraksi Kode OTP (4-8 digit) jika kategori OTP atau ada pola angka
+    // Ekstraksi Kode OTP akurat jika kategori pesan adalah OTP resmi
     val extractedOtp = remember(message.body, message.category) {
-        val otpPattern = "(?:kode|otp|token|pin|code)?\\s*(?:adalah|is|:)?\\s*(\\b\\d{4,8}\\b)".toRegex(RegexOption.IGNORE_CASE)
-        val match = otpPattern.find(message.body)
-        match?.groupValues?.get(1) ?: if (message.category == SmsSafetyCategory.OTP_OFFICIAL) {
-            "\\b\\d{4,8}\\b".toRegex().find(message.body)?.value
-        } else null
+        if (message.category == SmsSafetyCategory.OTP_OFFICIAL) {
+            com.hardcoreblocker.app.data.repository.BlockRepository.OtpDetector.extractOtp(message.body)
+        } else {
+            null
+        }
     }
 
     ModalBottomSheet(

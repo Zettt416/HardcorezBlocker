@@ -102,6 +102,7 @@ interface Strings {
     val inboxFilterPhishing: String
     val inboxFilterPromo: String
     val inboxFilterOtp: String
+    val inboxFilterInfo: String
     val inboxFilterContacts: String
     val inboxSearchPlaceholder: String
     val inboxShowingCount: (Int) -> String
@@ -409,6 +410,7 @@ object IndonesianStrings : Strings {
     override val inboxFilterPhishing = "Bahaya / Scam"
     override val inboxFilterPromo = "Promosi"
     override val inboxFilterOtp = "Kode OTP"
+    override val inboxFilterInfo = "Info / Layanan"
     override val inboxFilterContacts = "Kontak Saya"
     override val inboxSearchPlaceholder = "Cari pengirim, kata kunci, isi pesan..."
     override val inboxShowingCount: (Int) -> String = { count -> "Menampilkan $count pesan SMS" }
@@ -706,6 +708,7 @@ object EnglishStrings : Strings {
     override val inboxFilterPhishing = "Threat / Scam"
     override val inboxFilterPromo = "Promotions"
     override val inboxFilterOtp = "OTP Codes"
+    override val inboxFilterInfo = "Info / Services"
     override val inboxFilterContacts = "My Contacts"
     override val inboxSearchPlaceholder = "Search sender, keyword, content..."
     override val inboxShowingCount: (Int) -> String = { count -> "Showing $count SMS messages" }

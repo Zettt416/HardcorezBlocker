@@ -423,25 +423,156 @@ class BlockRepository private constructor(context: Context) {
         return null
     }
 
+    // --- DETEKSI & EKSTRAKSI KODE OTP AKURAT ---
+    object OtpDetector {
+        private val OTP_PREFIX_REGEX = Regex(
+            "(?:kode\\s*(?:otp|verifikasi|otentikasi|keamanan|rahasia|login|masuk|konfirmasi|aktivasi)?|otp\\s*code|verification\\s*code|security\\s*code|authentication\\s*code|login\\s*code|activation\\s*code|confirmation\\s*code|passcode)\\s*(?:anda|kamu|mu|is|adalah|:)?\\s*[:=\\s-]+\\s*([A-Za-z0-9]{4,8})\\b",
+            RegexOption.IGNORE_CASE
+        )
+
+        private val OTP_SUFFIX_REGEX = Regex(
+            "\\b([0-9]{4,8})\\s*(?:adalah|is|merupakan)?\\s*(?:kode\\s*(?:otp|verifikasi|otentikasi|keamanan|rahasia|login|aktivasi)|your\\s*(?:otp|verification|security|login|activation)\\s*code)",
+            RegexOption.IGNORE_CASE
+        )
+
+        private val GOOGLE_OTP_REGEX = Regex(
+            "\\b(G-\\d{6})\\b",
+            RegexOption.IGNORE_CASE
+        )
+
+        private val OTP_KEYWORDS = listOf(
+            "kode otp", "kode verifikasi", "verification code", "kode otentikasi",
+            "authentication code", "one-time password", "onetime password",
+            "kode login", "kode keamanan", "security code", "kode rahasia",
+            "kode konfirmasi", "kode aktivasi", "activation code", "otp "
+        )
+
+        fun extractOtp(body: String): String? {
+            val lower = body.lowercase(Locale.ROOT)
+
+            // Jika ada kata kunci poin, kuota, diskon, promo tanpa kata OTP, jelas bukan OTP
+            if ((lower.contains("poin") || lower.contains("point") || lower.contains("diskon") || lower.contains("kuota")) &&
+                !lower.contains("otp") && !lower.contains("verif") && !lower.contains("kode rahasia")
+            ) {
+                return null
+            }
+
+            // Google style: G-123456
+            val gMatch = GOOGLE_OTP_REGEX.find(body)
+            if (gMatch != null && (lower.contains("google") || lower.contains("verif"))) {
+                return gMatch.groupValues[1]
+            }
+
+            // Prefix: Kode OTP Anda: 123456
+            val pMatch = OTP_PREFIX_REGEX.find(body)
+            if (pMatch != null) {
+                val code = pMatch.groupValues[1]
+                if (isValidOtpCode(code, body)) return code
+            }
+
+            // Suffix: 123456 adalah kode verifikasi
+            val sMatch = OTP_SUFFIX_REGEX.find(body)
+            if (sMatch != null) {
+                val code = sMatch.groupValues[1]
+                if (isValidOtpCode(code, body)) return code
+            }
+
+            // Fallback jika ada kata kunci OTP jelas
+            val hasExplicitOtp = OTP_KEYWORDS.any { lower.contains(it) } || lower.contains("otp")
+            if (hasExplicitOtp) {
+                val numberRegex = Regex("\\b(\\d{4,8})\\b")
+                val matches = numberRegex.findAll(body).map { it.groupValues[1] }.toList()
+                for (num in matches) {
+                    if (isValidOtpCode(num, body)) {
+                        return num
+                    }
+                }
+            }
+
+            return null
+        }
+
+        private fun isValidOtpCode(code: String, fullBody: String): Boolean {
+            if (code.length !in 4..8) return false
+            if (code.startsWith("08") || code.startsWith("62")) return false // nomor telepon
+
+            val idx = fullBody.indexOf(code)
+            if (idx > 0) {
+                val prefix = fullBody.substring(maxOf(0, idx - 4), idx).lowercase(Locale.ROOT)
+                if (prefix.contains("rp") || prefix.contains("idr")) return false // nilai uang
+            }
+
+            if (idx + code.length < fullBody.length) {
+                val suffix = fullBody.substring(idx + code.length, minOf(fullBody.length, idx + code.length + 8)).lowercase(Locale.ROOT)
+                if (suffix.startsWith(" poin") || suffix.startsWith("point") ||
+                    suffix.startsWith(" gb") || suffix.startsWith(" mb") ||
+                    suffix.startsWith(" kb") || suffix.startsWith(" rb") ||
+                    suffix.startsWith(" jt") || suffix.startsWith(" rupiah")) {
+                    return false // besaran poin / kuota
+                }
+            }
+
+            // Abaikan tahun kalender (2020..2035) jika tidak ada kata otp langsung di dekatnya
+            val intVal = code.toIntOrNull()
+            if (intVal != null && intVal in 2020..2035) {
+                val contextAround = fullBody.substring(maxOf(0, idx - 10), minOf(fullBody.length, idx + code.length + 10)).lowercase(Locale.ROOT)
+                if (!contextAround.contains("otp") && !contextAround.contains("kode") && !contextAround.contains("code")) {
+                    return false
+                }
+            }
+
+            return true
+        }
+
+        fun isOtp(body: String): Boolean {
+            val lower = body.lowercase(Locale.ROOT)
+            val hasOtpKeyword = OTP_KEYWORDS.any { lower.contains(it) } || lower.contains("otp")
+            if (!hasOtpKeyword) return false
+            return extractOtp(body) != null
+        }
+    }
+
+    fun extractOtpCode(body: String): String? = OtpDetector.extractOtp(body)
+    fun isGenuineOtp(body: String): Boolean = OtpDetector.isOtp(body)
+
     /**
-     * Memeriksa apakah pesan adalah promosi marketing LBA operator
+     * Memeriksa apakah pesan adalah promosi marketing LBA operator, kuota, poin, atau diskon komersial
      */
     fun isPromoMarketing(sender: String, body: String): Boolean {
         val lowerBody = body.lowercase(Locale.ROOT)
         val lowerSender = sender.lowercase(Locale.ROOT)
 
+        val promoSenders = listOf("myads", "tsurvey", "promo", "iklan", "penawaran", "diskon", "deal", "reward", "info-tsel")
+        if (promoSenders.any { lowerSender.contains(it) }) return true
+
         val promoIndicators = listOf(
-            "myads.id", "tsel.id", "*606#", "*500*", "kirim stop", "ketik stop",
-            "s&k berlaku", "cashback", "diskon", "promo", "kupon", "voucher",
-            "hanya hari ini", "beli 1 gratis 1", "beli 1 dapat", "beli 2 dapat",
-            "gratis 1 jam", "apply kartu kredit", "paylater", "bunga 0%",
-            "pretzel", "karaoke", "survei", "responden", "tsurvey.id", "upoint.id",
-            "poin reward", "buka tabungan", "bonus s.d", "limit s.d", "dana instan"
+            // Poin, Loyalty, & Hadiah
+            "poin", "point", "points", "tukar poin", "tukarpoin", "perolehan poin",
+            "dapat poin", "bonus poin", "kumpulkan poin", "poin telkomsel", "poin reward",
+            "reward", "rewards", "loyalty", "hadiah", "undian", "gebyar", "rejeki", "menangkan",
+
+            // Kuota, Pulsa, & Paket Operator
+            "kuota", "paket data", "paket internet", "ekstra kuota", "bonus kuota",
+            "paket nelpon", "nelpon puas", "unlimited", "isi ulang", "pulsa", "masa aktif",
+            "perpanjangan paket", "roaming", "tarif hemat", "combo sakti", "*363#", "*888#",
+            "*123#", "*500*", "*606#", "*700#", "mytelkomsel", "myim3", "myxl", "bima+",
+
+            // Diskon, Belanja, Cashback, & Kupon
+            "cashback", "diskon", "promo", "promosi", "kupon", "voucher", "sale",
+            "hemat", "hanya hari ini", "beli 1 gratis 1", "beli 1 dapat", "beli 2 dapat",
+            "gratis 1 jam", "gratis ongkir", "flash sale", "special offer", "spesial untukmu",
+            "penawaran eksklusif", "penawaran terbatas", "khusus hari ini",
+
+            // Finansial Komersial & Pinjol
+            "apply kartu kredit", "paylater", "bunga 0%", "buka tabungan", "bonus s.d",
+            "limit s.d", "dana instan", "limit pinjaman", "cicilan ringan",
+
+            // Iklan LBA & Survey
+            "myads.id", "tsel.id", "tsurvey.id", "upoint.id", "kirim stop", "ketik stop",
+            "s&k berlaku", "syarat & ketentuan", "survei", "responden", "pretzel", "karaoke"
         )
 
-        return promoIndicators.any { lowerBody.contains(it) } ||
-                lowerSender.contains("myads") ||
-                lowerSender.contains("tsurvey")
+        return promoIndicators.any { lowerBody.contains(it) }
     }
 
     /**
@@ -494,12 +625,7 @@ class BlockRepository private constructor(context: Context) {
 
         // 4. Loloskan pengirim alfanumerik resmi & OTP murni jika tidak terdeteksi bahaya
         val isAlphanumericSender = cleanSender.matches(ALPHANUMERIC_SENDER_REGEX)
-        val isOtpMessage = body.contains("otp", ignoreCase = true) ||
-                body.contains("kode verifikasi", ignoreCase = true) ||
-                body.contains("verification code", ignoreCase = true) ||
-                body.contains("kode keamanan", ignoreCase = true) ||
-                body.contains("one-time password", ignoreCase = true) ||
-                body.contains("kode login", ignoreCase = true)
+        val isOtpMessage = OtpDetector.isOtp(body)
 
         if (isAlphanumericSender || isOtpMessage) {
             return Pair(false, "Layanan Resmi / OTP Terverifikasi")
@@ -551,14 +677,11 @@ class BlockRepository private constructor(context: Context) {
                         isContact -> {
                             com.hardcoreblocker.app.data.model.SmsSafetyCategory.SAFE_CONTACT
                         }
+                        OtpDetector.isOtp(body) -> {
+                            com.hardcoreblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL
+                        }
                         isPromoMarketing(cleanSender, body) -> {
                             com.hardcoreblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING
-                        }
-                        cleanSender.matches(ALPHANUMERIC_SENDER_REGEX) ||
-                                body.contains("otp", ignoreCase = true) ||
-                                body.contains("kode verifikasi", ignoreCase = true) ||
-                                body.contains("verification code", ignoreCase = true) -> {
-                            com.hardcoreblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL
                         }
                         else -> {
                             com.hardcoreblocker.app.data.model.SmsSafetyCategory.NORMAL
