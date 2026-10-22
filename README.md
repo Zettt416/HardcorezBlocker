@@ -67,6 +67,14 @@ Export and import your entire rule dictionary and settings via encrypted JSON fi
 
 ---
 
+## 🌏 Regional Focus & Global Extensibility
+
+While **HardcoreBlocker** comes pre-tuned with heuristics for Indonesian communication ecosystems (such as SMS spam keywords, official cellular operators, and banking shortcodes), the underlying engine is **entirely modular and internationalized**:
+- **Universal Core Architecture**: The telecom filter engine (`CallScreeningService`, prefix rules, exact blacklist, regex patterns, and contact-only whitelisting) works universally in any country and on any carrier network worldwide.
+- **Customizable Base**: Developers and users outside Indonesia can easily adapt or fork this project as a solid foundation, adding localized spam keywords, regional emergency numbers, and carrier whitelist rules for their respective countries.
+
+---
+
 ## 🛠️ Architecture & Tech Stack
 
 ```
@@ -150,5 +158,5 @@ HardcoreBlocker requests only the bare minimum Android system permissions necess
 Built with dedication to digital privacy and user empowerment.  
 Issues and Pull Requests are welcome!
 
-**Copyright © 2026 HardcoreBlocker.**  
+**Copyright © 2026 Zettt416.**  
 Distributed under the [MIT License](LICENSE).

@@ -67,6 +67,14 @@ Ekspor seluruh basis aturan Anda ke format JSON terenkripsi lokal, dan impor kem
 
 ---
 
+## 🌏 Fokus Regional & Basis Penggunaan Global
+
+Meskipun **HardcoreBlocker** saat ini dioptimalkan khusus untuk ekosistem komunikasi di **Indonesia** (seperti pengenalan pola SMS penipuan lokal, kode awalan operator seluler, dan nama pengirim perbankan/fintech resmi), fondasi aplikasi ini dirancang **modular dan fleksibel untuk penggunaan global**:
+- **Arsitektur Universal**: Fitur inti seperti pemblokiran panggilan 0-milidetik (`CallScreeningService`), proteksi hanya-kontak (Mode Hardcore), filter awalan negara (+Prefix), nomor persis, dan ekspresi reguler (Regex) bekerja secara universal di negara mana pun tanpa batas wilayah.
+- **Fondasi Siap Kustomisasi**: Pengguna atau pengembang dari luar Indonesia dapat dengan mudah menjadikan proyek ini sebagai basis perisai privasi dengan menyesuaikan kamus kata kunci spam lokal, daftar pengirim resmi, dan nomor darurat sesuai regulasi telekomunikasi negara masing-masing.
+
+---
+
 ## 🛠️ Arsitektur & Teknologi
 
 ```
@@ -150,5 +158,5 @@ Aplikasi ini hanya meminta izin resmi yang mutlak dibutuhkan untuk fungsi keaman
 Dibuat dengan dedikasi tinggi untuk kebebasan privasi digital.  
 Silakan ajukan Issue atau Pull Request jika Anda memiliki saran perbaikan atau fitur baru.
 
-**Hak Cipta © 2026 HardcoreBlocker.**  
+**Hak Cipta © 2026 Zettt416.**  
 Didistribusikan di bawah lisensi [MIT License](LICENSE).

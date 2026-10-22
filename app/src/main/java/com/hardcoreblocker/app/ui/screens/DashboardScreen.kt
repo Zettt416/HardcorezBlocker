@@ -116,53 +116,68 @@ fun DashboardScreen(
         if (!isRoleHeld) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = WarningAmber.copy(alpha = 0.08f)),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 14.dp)
-                    .border(1.dp, WarningAmber.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                    .border(1.dp, WarningAmber.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
             ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(14.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(WarningAmber.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = WarningAmber,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(WarningAmber.copy(alpha = 0.18f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = WarningAmber,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = strings.dashPermAlertTitle,
                             color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            text = strings.dashPermAlertDesc,
-                            color = TextSecondary,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = strings.dashPermAlertDesc,
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                     Button(
                         onClick = onRequestRole,
                         colors = ButtonDefaults.buttonColors(containerColor = WarningAmber, contentColor = Color.White),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(38.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
                     ) {
-                        Text(strings.dashGrantPerm, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(strings.dashGrantPerm, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -180,7 +195,7 @@ fun DashboardScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(18.dp)
+                    .padding(16.dp)
             ) {
                 // Baris Atas: Icon Shield, Judul Status, dan Master Switch
                 Row(
@@ -189,40 +204,43 @@ fun DashboardScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .size(46.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .background(shieldColor.copy(alpha = 0.12f))
-                            .border(1.dp, shieldColor.copy(alpha = 0.35f), RoundedCornerShape(16.dp)),
+                            .border(1.dp, shieldColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (isShieldActive) Icons.Default.Shield else Icons.Default.SecurityUpdateWarning,
                             contentDescription = "Shield",
                             tint = shieldColor,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (isShieldActive) strings.dashProtectionActive else strings.dashProtectionInactive,
                             color = TextPrimary,
-                            fontSize = 17.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = if (isShieldActive) {
-                                if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) strings.dashModeHardcore else strings.dashModeSmart
+                                if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) strings.dashStatusHardcoreDesc else strings.dashStatusSmartDesc
                             } else {
-                                strings.dashProtectionPaused
+                                strings.dashStatusPausedDesc
                             },
-                            color = if (isShieldActive) shieldColor else TextMuted,
+                            color = TextSecondary,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
+                            lineHeight = 16.sp
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     // Master Toggle Switch
                     Switch(
@@ -247,9 +265,9 @@ fun DashboardScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = DarkBorder, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = DarkBorder, thickness = 0.8.dp)
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Baris Mode Selector (Segmented Pill Tab)
                 Text(
@@ -292,22 +310,39 @@ fun DashboardScreen(
                                     viewModel.setProtectionActive(true)
                                     viewModel.setBlockingMode(BlockingMode.HARDCORE_CONTACTS_ONLY)
                                 }
-                                .padding(vertical = 9.dp),
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = null,
-                                    tint = if (isHardcoreSelected) ShieldActive else TextSecondary,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Lock,
+                                        contentDescription = null,
+                                        tint = if (isHardcoreSelected) ShieldActive else TextSecondary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = strings.dashModeHardcoreTitle,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isHardcoreSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                        color = if (isHardcoreSelected) ShieldActive else TextPrimary,
+                                        maxLines = 1
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = strings.dashModeHardcore,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isHardcoreSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isHardcoreSelected) ShieldActive else TextSecondary
+                                    text = strings.dashModeHardcoreSub,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = if (isHardcoreSelected) ShieldActive.copy(alpha = 0.85f) else TextMuted,
+                                    maxLines = 1
                                 )
                             }
                         }
@@ -329,22 +364,39 @@ fun DashboardScreen(
                                     viewModel.setProtectionActive(true)
                                     viewModel.setBlockingMode(BlockingMode.SMART_FILTER)
                                 }
-                                .padding(vertical = 9.dp),
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.FilterAlt,
-                                    contentDescription = null,
-                                    tint = if (isSmartSelected) PrimaryBlue else TextSecondary,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.FilterAlt,
+                                        contentDescription = null,
+                                        tint = if (isSmartSelected) PrimaryBlue else TextSecondary,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = strings.dashModeSmartTitle,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSmartSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                        color = if (isSmartSelected) PrimaryBlue else TextPrimary,
+                                        maxLines = 1
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = strings.dashModeSmart,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSmartSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSmartSelected) PrimaryBlue else TextSecondary
+                                    text = strings.dashModeSmartSub,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = if (isSmartSelected) PrimaryBlue.copy(alpha = 0.85f) else TextMuted,
+                                    maxLines = 1
                                 )
                             }
                         }
@@ -354,16 +406,38 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Keterangan Mode yang Sedang Dipilih
-                Text(
-                    text = when {
-                        !isShieldActive -> strings.dashProtectionPaused
-                        settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY -> strings.onbModeHardcoreDesc
-                        else -> strings.onbModeSmartDesc
-                    },
-                    color = TextSecondary,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp
-                )
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = (if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) ShieldActive else PrimaryBlue).copy(alpha = 0.08f),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        (if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) ShieldActive else PrimaryBlue).copy(alpha = 0.2f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) ShieldActive else PrimaryBlue,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = when {
+                                !isShieldActive -> strings.dashProtectionPaused
+                                settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY -> strings.onbModeHardcoreDesc
+                                else -> strings.onbModeSmartDesc
+                            },
+                            color = TextSecondary,
+                            fontSize = 11.5.sp,
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
             }
         }
 
@@ -554,47 +628,56 @@ private fun InteractiveStatCard(
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
-        shape = RoundedCornerShape(14.dp),
-        modifier = modifier.border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
+        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.border(1.dp, DarkBorder, RoundedCornerShape(16.dp))
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(color.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(color.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = color,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
                 Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = color,
-                    modifier = Modifier.size(16.dp)
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = color.copy(alpha = 0.75f),
+                    modifier = Modifier.size(13.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = count,
                 color = TextPrimary,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
+                fontSize = 22.sp
             )
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 color = TextSecondary,
                 fontSize = 11.sp,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = actionHint,
-                color = color,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                minLines = 2,
+                lineHeight = 14.sp
             )
         }
     }

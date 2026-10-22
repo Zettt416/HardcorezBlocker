@@ -79,7 +79,14 @@ interface Strings {
     val dashGrantPerm: String
     val dashModeTitle: String
     val dashModeHardcore: String
+    val dashModeHardcoreTitle: String
+    val dashModeHardcoreSub: String
     val dashModeSmart: String
+    val dashModeSmartTitle: String
+    val dashModeSmartSub: String
+    val dashStatusHardcoreDesc: String
+    val dashStatusSmartDesc: String
+    val dashStatusPausedDesc: String
     val dashModeOff: String
     val dashStatBlockedCalls: String
     val dashStatBlockedSms: String
@@ -317,6 +324,7 @@ interface Strings {
     val toastSmsDeleted: (Int) -> String
     val toastImportSuccess: (Int) -> String
     val toastImportFailed: String
+    val toastPressBackAgainToExit: String
 }
 
 object IndonesianStrings : Strings {
@@ -388,7 +396,14 @@ object IndonesianStrings : Strings {
     override val dashGrantPerm = "Aktifkan Sekarang"
     override val dashModeTitle = "MODE PROTEKSI AKTIF"
     override val dashModeHardcore = "Hardcore (Hanya Kontak)"
+    override val dashModeHardcoreTitle = "Hardcore"
+    override val dashModeHardcoreSub = "Hanya Kontak"
     override val dashModeSmart = "Smart (Berdasarkan Aturan)"
+    override val dashModeSmartTitle = "Smart Filter"
+    override val dashModeSmartSub = "Basis Aturan"
+    override val dashStatusHardcoreDesc = "Semua nomor di luar Kontak otomatis ditolak"
+    override val dashStatusSmartDesc = "Scam & nomor mencurigakan otomatis diblokir"
+    override val dashStatusPausedDesc = "Proteksi dijeda, ketuk switch untuk aktifkan"
     override val dashModeOff = "Nonaktif"
     override val dashStatBlockedCalls = "Panggilan Dicegat"
     override val dashStatBlockedSms = "SMS Dikarantina"
@@ -615,6 +630,7 @@ object IndonesianStrings : Strings {
     override val toastSmsDeleted: (Int) -> String = { count -> "$count SMS berhasil dihapus" }
     override val toastImportSuccess: (Int) -> String = { count -> "$count aturan berhasil diimpor!" }
     override val toastImportFailed = "Gagal mengimpor: Format JSON tidak valid"
+    override val toastPressBackAgainToExit = "Tekan sekali lagi untuk keluar"
 }
 
 object EnglishStrings : Strings {
@@ -686,7 +702,14 @@ object EnglishStrings : Strings {
     override val dashGrantPerm = "Enable Role Now"
     override val dashModeTitle = "ACTIVE PROTECTION MODE"
     override val dashModeHardcore = "Hardcore (Contacts Only)"
+    override val dashModeHardcoreTitle = "Hardcore"
+    override val dashModeHardcoreSub = "Contacts Only"
     override val dashModeSmart = "Smart (Rule-Based)"
+    override val dashModeSmartTitle = "Smart Filter"
+    override val dashModeSmartSub = "Rule-Based"
+    override val dashStatusHardcoreDesc = "All non-contact numbers are blocked"
+    override val dashStatusSmartDesc = "Scams & suspicious numbers are blocked"
+    override val dashStatusPausedDesc = "Protection paused, tap switch to enable"
     override val dashModeOff = "Disabled"
     override val dashStatBlockedCalls = "Calls Intercepted"
     override val dashStatBlockedSms = "SMS Quarantined"
@@ -913,6 +936,7 @@ object EnglishStrings : Strings {
     override val toastSmsDeleted: (Int) -> String = { count -> "$count SMS deleted successfully" }
     override val toastImportSuccess: (Int) -> String = { count -> "$count rules imported successfully!" }
     override val toastImportFailed = "Failed to import: Invalid JSON format"
+    override val toastPressBackAgainToExit = "Press back again to exit"
 }
 
 fun RuleType.getDisplayName(strings: Strings): String = when (this) {

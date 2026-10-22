@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -22,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -193,8 +195,26 @@ fun MainAppScreen(
     onRequestContactsPermission: () -> Unit,
     onRequestSmsPermission: () -> Unit
 ) {
+    val context = LocalContext.current
     val strings = LocalAppStrings.current
     var selectedTab by remember { mutableStateOf(initialTab) }
+    var lastBackPressTime by remember { mutableLongStateOf(0L) }
+
+    BackHandler {
+        val currentTime = System.currentTimeMillis()
+        if (selectedTab != NavigationTab.DASHBOARD) {
+            selectedTab = NavigationTab.DASHBOARD
+            lastBackPressTime = currentTime
+            Toast.makeText(context, strings.toastPressBackAgainToExit, Toast.LENGTH_SHORT).show()
+        } else {
+            if (currentTime - lastBackPressTime < 2000L) {
+                (context as? ComponentActivity)?.finish()
+            } else {
+                lastBackPressTime = currentTime
+                Toast.makeText(context, strings.toastPressBackAgainToExit, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
