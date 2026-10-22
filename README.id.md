@@ -17,6 +17,12 @@
   <img src="https://img.shields.io/badge/Languages-ID_%7C_EN-00E5FF?style=for-the-badge" alt="Bilingual" />
 </p>
 
+<p align="center">
+  <a href="release/HardcoreBlocker.apk?raw=true">
+    <img src="https://img.shields.io/badge/📥_Download_APK-v1.0.0_Siap_Pakai-34A853?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+</p>
+
 ---
 
 ## 🌟 Mengapa HardcoreBlocker?

@@ -11,6 +11,7 @@
 .cxx
 *.apk
 *.aab
+!release/*.apk
 
 # Keystore files
 *.jks
