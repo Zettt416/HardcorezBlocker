@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.screens
+package com.hardcorezblocker.app.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
@@ -591,6 +591,7 @@ fun DashboardScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Min)
                 .padding(bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -600,7 +601,9 @@ fun DashboardScreen(
                 icon = Icons.Default.AddModerator,
                 accentColor = PrimaryBlue,
                 onClick = { onNavigateToTab(NavigationTab.RULES) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
             )
             QuickShortcutCard(
                 title = strings.dashActionCheckSms,
@@ -608,7 +611,9 @@ fun DashboardScreen(
                 icon = Icons.Default.MarkChatRead,
                 accentColor = PromoPurple,
                 onClick = { onNavigateToTab(NavigationTab.INBOX) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
             )
         }
     }
@@ -751,7 +756,9 @@ private fun QuickShortcutCard(
         modifier = modifier.border(1.dp, DarkBorder, RoundedCornerShape(12.dp))
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -769,17 +776,22 @@ private fun QuickShortcutCard(
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = title,
                     color = TextPrimary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     color = TextMuted,
-                    fontSize = 11.sp
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
                 )
             }
         }

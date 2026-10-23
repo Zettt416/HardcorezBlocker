@@ -22,7 +22,7 @@ android {
         create("release") {
             storeFile = file("${rootDir}/hardcore_release.jks")
             storePassword = "hardcore123"
-            keyAlias = "hardcoreblocker"
+            keyAlias = "hardcorezblocker"
             keyPassword = "hardcore123"
             enableV1Signing = true
             enableV2Signing = true
