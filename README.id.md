@@ -1,7 +1,7 @@
-# 🛡️ HardcoreBlocker
+# 🛡️ HardcorezBlocker
 
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="HardcoreBlocker Logo" width="120" height="120" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="HardcorezBlocker Logo" width="120" height="120" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
 </p>
 
 <p align="center">
@@ -18,18 +18,18 @@
 </p>
 
 <p align="center">
-  <a href="release/HardcoreBlocker.apk?raw=true">
+  <a href="release/HardcorezBlocker.apk?raw=true">
     <img src="https://img.shields.io/badge/📥_Download_APK-v1.0.0_Siap_Pakai-34A853?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
   </a>
 </p>
 
 ---
 
-## 🌟 Mengapa HardcoreBlocker?
+## 🌟 Mengapa HardcorezBlocker?
 
 Aplikasi pemblokir komersial umum mengharuskan Anda mengunggah seluruh kontak dan log panggilan ke server cloud mereka dengan dalih "analisis komunitas". Data pribadi keluarga, rekan bisnis, dan kontak sensitif Anda rentan bocor dan diperjualbelikan.
 
-**HardcoreBlocker dibangun dengan prinsip privasi mutlak:**
+**HardcorezBlocker dibangun dengan prinsip privasi mutlak:**
 - 🚫 **Tanpa Izin Internet**: Izin `android.permission.INTERNET` **sama sekali tidak dicantumkan** di dalam `AndroidManifest.xml`. Secara teknis **mustahil** ada data yang bocor keluar dari ponsel Anda.
 - ⚡ **Pemutusan 0-Milidetik**: Terintegrasi langsung dengan subsistem resmi `Android Telecom Framework` (`CallScreeningService`), memutus panggilan spam sebelum perangkat bergetar atau berdering.
 - 💬 **Karantina SMS Cerdas**: Memisahkan SMS penipuan (APK kurir palsu, surat tilang fiktif, pinjol ilegal, tautan phishing) ke kotak terisolasi.
@@ -69,7 +69,7 @@ Ekspor seluruh basis aturan Anda ke format JSON terenkripsi lokal, dan impor kem
 
 ## 🌏 Fokus Regional & Basis Penggunaan Global
 
-Meskipun **HardcoreBlocker** saat ini dioptimalkan khusus untuk ekosistem komunikasi di **Indonesia** (seperti pengenalan pola SMS penipuan lokal, kode awalan operator seluler, dan nama pengirim perbankan/fintech resmi), fondasi aplikasi ini dirancang **modular dan fleksibel untuk penggunaan global**:
+Meskipun **HardcorezBlocker** saat ini dioptimalkan khusus untuk ekosistem komunikasi di **Indonesia** (seperti pengenalan pola SMS penipuan lokal, kode awalan operator seluler, dan nama pengirim perbankan/fintech resmi), fondasi aplikasi ini dirancang **modular dan fleksibel untuk penggunaan global**:
 - **Arsitektur Universal**: Fitur inti seperti pemblokiran panggilan 0-milidetik (`CallScreeningService`), proteksi hanya-kontak (Mode Hardcore), filter awalan negara (+Prefix), nomor persis, dan ekspresi reguler (Regex) bekerja secara universal di negara mana pun tanpa batas wilayah.
 - **Fondasi Siap Kustomisasi**: Pengguna atau pengembang dari luar Indonesia dapat dengan mudah menjadikan proyek ini sebagai basis perisai privasi dengan menyesuaikan kamus kata kunci spam lokal, daftar pengirim resmi, dan nomor darurat sesuai regulasi telekomunikasi negara masing-masing.
 
@@ -78,9 +78,9 @@ Meskipun **HardcoreBlocker** saat ini dioptimalkan khusus untuk ekosistem komuni
 ## 🛠️ Arsitektur & Teknologi
 
 ```
-HardcoreBlocker
+HardcorezBlocker
 ├── app/
-│   ├── src/main/java/com/hardcoreblocker/app/
+│   ├── src/main/java/com/hardcorezblocker/app/
 │   │   ├── data/
 │   │   │   ├── model/         # BlockRule, BlockedLog, BlockSettings, SmsMessageItem
 │   │   │   └── repository/    # BlockRepository (Offline DB & SharedPreferences)
@@ -91,7 +91,7 @@ HardcoreBlocker
 │   │   │   ├── screens/       # Splash, Onboarding, Dashboard, Inbox, Rules, Logs, Settings
 │   │   │   ├── theme/         # Color tokens, Typography, Theme provider
 │   │   │   └── viewmodel/     # MainViewModel (MVI/MVVM with StateFlow)
-│   │   ├── HardcoreBlockerApp.kt
+│   │   ├── HardcorezBlockerApp.kt
 │   │   └── MainActivity.kt
 ```
 
@@ -115,8 +115,8 @@ HardcoreBlocker
 
 1. **Clone repositori**:
    ```powershell
-   git clone https://github.com/Zettt416/HardcoreBlockerzp.git
-   cd HardcoreBlockerzp
+   git clone https://github.com/Zettt416/HardcorezBlocker.git
+   cd HardcorezBlocker
    ```
 
 2. **Build Debug APK**:
@@ -144,7 +144,7 @@ Aplikasi ini hanya meminta izin resmi yang mutlak dibutuhkan untuk fungsi keaman
 
 | Hak Akses (Permission) | Mengapa Dibutuhkan? (Rationale) |
 |---|---|
-| `ROLE_CALL_SCREENING` | Memberikan wewenang sistem kepada HardcoreBlocker untuk menolak panggilan spam sebelum berdering. |
+| `ROLE_CALL_SCREENING` | Memberikan wewenang sistem kepada HardcorezBlocker untuk menolak panggilan spam sebelum berdering. |
 | `READ_CONTACTS` | Memverifikasi apakah nomor penelepon ada di buku kontak Anda (Whitelist lokal, tidak pernah diunggah). |
 | `RECEIVE_SMS` & `READ_SMS` | Menganalisis SMS masuk secara lokal untuk karantina pesan phishing dan ekstraksi OTP. |
 | `POST_NOTIFICATIONS` | Menampilkan pemberitahuan senyap opsional saat panggilan atau SMS scam berhasil diblokir. |

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.hardcoreblocker.app"
+    namespace = "com.hardcorezblocker.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.hardcoreblocker.app"
+        applicationId = "com.hardcorezblocker.app"
         minSdk = 29
         targetSdk = 35
         versionCode = 1

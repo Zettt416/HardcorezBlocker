@@ -1,1 +1,1 @@
-# Proguard rules for HardcoreBlocker
+# Proguard rules for HardcorezBlocker

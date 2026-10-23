@@ -1,7 +1,7 @@
-# 🛡️ HardcoreBlocker
+# 🛡️ HardcorezBlocker
 
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="HardcoreBlocker Logo" width="120" height="120" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="HardcorezBlocker Logo" width="120" height="120" style="border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
 </p>
 
 <p align="center">
@@ -18,18 +18,18 @@
 </p>
 
 <p align="center">
-  <a href="release/HardcoreBlocker.apk?raw=true">
+  <a href="release/HardcorezBlocker.apk?raw=true">
     <img src="https://img.shields.io/badge/📥_Download_APK-v1.0.0_Ready-34A853?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
   </a>
 </p>
 
 ---
 
-## 🌟 Why HardcoreBlocker?
+## 🌟 Why HardcorezBlocker?
 
 Mainstream commercial call-blocking apps upload your entire address book, call logs, and SMS messages to remote cloud servers under the guise of "community analytics". Your family's private numbers, business contacts, and personal conversations end up monetized and exposed to data breaches.
 
-**HardcoreBlocker was built on zero-compromise privacy principles:**
+**HardcorezBlocker was built on zero-compromise privacy principles:**
 - 🚫 **Zero Internet Permission**: The `android.permission.INTERNET` privilege is **completely omitted** from `AndroidManifest.xml`. It is technically impossible for any data to leave your device.
 - ⚡ **0-Millisecond Termination**: Hooks directly into Android's native `CallScreeningService` Telecom subsystem, rejecting unwanted callers before your phone vibrates or rings.
 - 💬 **Intelligent SMS Quarantine**: Isolates scam SMS (fake courier APK drops, fraudulent fines, predatory loan traps, phishing URLs) into a sandboxed quarantine inbox.
@@ -69,7 +69,7 @@ Export and import your entire rule dictionary and settings via encrypted JSON fi
 
 ## 🌏 Regional Focus & Global Extensibility
 
-While **HardcoreBlocker** comes pre-tuned with heuristics for Indonesian communication ecosystems (such as SMS spam keywords, official cellular operators, and banking shortcodes), the underlying engine is **entirely modular and internationalized**:
+While **HardcorezBlocker** comes pre-tuned with heuristics for Indonesian communication ecosystems (such as SMS spam keywords, official cellular operators, and banking shortcodes), the underlying engine is **entirely modular and internationalized**:
 - **Universal Core Architecture**: The telecom filter engine (`CallScreeningService`, prefix rules, exact blacklist, regex patterns, and contact-only whitelisting) works universally in any country and on any carrier network worldwide.
 - **Customizable Base**: Developers and users outside Indonesia can easily adapt or fork this project as a solid foundation, adding localized spam keywords, regional emergency numbers, and carrier whitelist rules for their respective countries.
 
@@ -78,9 +78,9 @@ While **HardcoreBlocker** comes pre-tuned with heuristics for Indonesian communi
 ## 🛠️ Architecture & Tech Stack
 
 ```
-HardcoreBlocker
+HardcorezBlocker
 ├── app/
-│   ├── src/main/java/com/hardcoreblocker/app/
+│   ├── src/main/java/com/hardcorezblocker/app/
 │   │   ├── data/
 │   │   │   ├── model/         # BlockRule, BlockedLog, BlockSettings, SmsMessageItem
 │   │   │   └── repository/    # BlockRepository (Offline DB & Encrypted Prefs)
@@ -91,7 +91,7 @@ HardcoreBlocker
 │   │   │   ├── screens/       # Splash, Onboarding, Dashboard, Inbox, Rules, Logs, Settings
 │   │   │   ├── theme/         # Color tokens, Typography, Theme provider
 │   │   │   └── viewmodel/     # MainViewModel (MVI/MVVM with StateFlow)
-│   │   ├── HardcoreBlockerApp.kt
+│   │   ├── HardcorezBlockerApp.kt
 │   │   └── MainActivity.kt
 ```
 
@@ -115,8 +115,8 @@ HardcoreBlocker
 
 1. **Clone the repository**:
    ```powershell
-   git clone https://github.com/Zettt416/HardcoreBlockerzp.git
-   cd HardcoreBlockerzp
+   git clone https://github.com/Zettt416/HardcorezBlocker.git
+   cd HardcorezBlocker
    ```
 
 2. **Build Debug APK**:
@@ -140,7 +140,7 @@ HardcoreBlocker
 
 ## 🔐 Permissions Transparency
 
-HardcoreBlocker requests only the bare minimum Android system permissions necessary for call screening and message classification:
+HardcorezBlocker requests only the bare minimum Android system permissions necessary for call screening and message classification:
 
 | System Permission | Purpose / Rationale |
 |---|---|
@@ -149,7 +149,7 @@ HardcoreBlocker requests only the bare minimum Android system permissions necess
 | `RECEIVE_SMS` & `READ_SMS` | Intercepts incoming messages to classify spam, extract OTPs, and quarantine malicious links. |
 | `POST_NOTIFICATIONS` | Displays optional silent heads-up alerts when an intrusion or scam is thwarted. |
 
-> 🛡️ **Privacy Guarantee:** HardcoreBlocker **does not request the `INTERNET` permission**. Your contacts, messages, and call logs can never leave your device.
+> 🛡️ **Privacy Guarantee:** HardcorezBlocker **does not request the `INTERNET` permission**. Your contacts, messages, and call logs can never leave your device.
 
 ---
 

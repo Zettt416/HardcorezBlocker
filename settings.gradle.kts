@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HardcoreBlocker"
+rootProject.name = "HardcorezBlocker"
 include(":app")
