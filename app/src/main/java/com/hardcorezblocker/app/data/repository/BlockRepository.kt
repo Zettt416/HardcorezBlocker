@@ -71,16 +71,23 @@ class BlockRepository private constructor(context: Context) {
             "telkomsel.com", "telkomsel.co.id", "tsel.me", "tsel.id", "myads.id", "upoint.id",
             "indosat.com", "ioh.co.id", "im3.id", "tri.co.id", "bima.tri.co.id",
             "xl.co.id", "axis.co.id", "axisnet.id", "myxl.co.id",
-            "smartfren.com", "byu.id"
+            "smartfren.com", "byu.id", "rbm.goog"
         )
 
         val TRUSTED_OFFICIAL_DOMAINS = setOf(
-            "go.id", "bps.go.id", "kominfo.go.id", "polri.go.id", "pajak.go.id",
+            "go.id", "bps.go.id", "kominfo.go.id", "polri.go.id", "pajak.go.id", "bi.go.id", "ojk.go.id",
             "bca.co.id", "klikbca.com", "bca.id",
             "bankmandiri.co.id", "mandiri.co.id", "livinbymandiri.com",
-            "bri.co.id", "bni.co.id", "cimbniaga.co.id", "btn.co.id",
+            "bri.co.id", "bni.co.id", "cimbniaga.co.id", "btn.co.id", "bankmega.com",
+            "danamon.co.id", "permatabank.com", "bankbsi.co.id",
             "dana.id", "gopay.co.id", "ovo.id", "shopee.co.id", "tokopedia.com", "wetv.vip", "wetv.me"
         )
+
+        fun isTrustedOfficialDomain(domain: String): Boolean {
+            val lower = domain.lowercase(Locale.ROOT)
+            return OFFICIAL_OPERATOR_DOMAINS.any { lower == it || lower.endsWith(".$it") } ||
+                    TRUSTED_OFFICIAL_DOMAINS.any { lower == it || lower.endsWith(".$it") }
+        }
 
         /**
          * Memeriksa apakah pengirim adalah nomor telepon seluler pribadi (P2P),
@@ -135,23 +142,31 @@ class BlockRepository private constructor(context: Context) {
             if (isClaimingBca && foundDomains.isNotEmpty()) {
                 val legitimateBcaDomains = listOf("bca.co.id", "klikbca.com", "bca.id")
                 val isOfficialBcaUrl = foundDomains.all { domain ->
-                    legitimateBcaDomains.any { valid -> domain == valid || domain.endsWith(".$valid") }
+                    legitimateBcaDomains.any { valid -> domain == valid || domain.endsWith(".$valid") } ||
+                    isTrustedOfficialDomain(domain)
                 }
                 if (!isOfficialBcaUrl) {
                     val fakeDomain = foundDomains.firstOrNull { domain ->
-                        !legitimateBcaDomains.any { valid -> domain == valid || domain.endsWith(".$valid") }
+                        !legitimateBcaDomains.any { valid -> domain == valid || domain.endsWith(".$valid") } &&
+                        !isTrustedOfficialDomain(domain)
                     } ?: "Domain Palsu"
                     return Pair(true, "Phishing BCA: Domain palsu ($fakeDomain)")
                 }
             }
 
-            // 4. Phishing Perbankan Lainnya (Mandiri, BRI, BNI)
+            // 4. Phishing Perbankan Lainnya (Mandiri, BRI, BNI, Mega, dll)
             val isClaimingBank = lowerSender.contains("bri") || lowerSender.contains("mandiri") || lowerSender.contains("bni") ||
-                    lowerBody.contains("bank mandiri") || lowerBody.contains("bank bri") || lowerBody.contains("bank bni")
+                    lowerBody.contains("bank mandiri") || lowerBody.contains("bank bri") || lowerBody.contains("bank bni") ||
+                    lowerSender.contains("mega") || lowerBody.contains("bank mega")
             if (isClaimingBank && foundDomains.isNotEmpty()) {
-                val legitimateBankDomains = listOf("bankmandiri.co.id", "mandiri.co.id", "bri.co.id", "bni.co.id")
+                val legitimateBankDomains = listOf(
+                    "bankmandiri.co.id", "mandiri.co.id", "livinbymandiri.com",
+                    "bri.co.id", "bni.co.id", "cimbniaga.co.id", "btn.co.id", "bankmega.com",
+                    "danamon.co.id", "permatabank.com", "bankbsi.co.id"
+                )
                 val isOfficialBankUrl = foundDomains.all { domain ->
-                    legitimateBankDomains.any { valid -> domain == valid || domain.endsWith(".$valid") }
+                    legitimateBankDomains.any { valid -> domain == valid || domain.endsWith(".$valid") } ||
+                    isTrustedOfficialDomain(domain)
                 }
                 if (!isOfficialBankUrl) {
                     return Pair(true, "Phishing Perbankan: Link bukan domain bank resmi")
@@ -384,6 +399,10 @@ class BlockRepository private constructor(context: Context) {
         val blockForeign = prefs.getBoolean("block_foreign", true)
         val blockLinks = prefs.getBoolean("block_links", true)
         val notifyBlocked = prefs.getBoolean("notify_blocked", true)
+        val notifyThreat = prefs.getBoolean("notify_threat_sms", true)
+        val notifyOtp = prefs.getBoolean("notify_otp_sms", true)
+        val notifyPromo = prefs.getBoolean("notify_promo_sms", false)
+        val notifyCalls = prefs.getBoolean("notify_blocked_calls", true)
         val themeStr = prefs.getString("theme_mode", com.hardcorezblocker.app.data.model.AppThemeMode.LIGHT.name)
         val themeMode = try {
             com.hardcorezblocker.app.data.model.AppThemeMode.valueOf(themeStr ?: com.hardcorezblocker.app.data.model.AppThemeMode.LIGHT.name)
@@ -403,6 +422,10 @@ class BlockRepository private constructor(context: Context) {
             blockForeignNumbers = blockForeign,
             blockSuspiciousLinksInSms = blockLinks,
             sendNotificationOnBlock = notifyBlocked,
+            notifyThreatSms = notifyThreat,
+            notifyOtpSms = notifyOtp,
+            notifyPromoSms = notifyPromo,
+            notifyBlockedCalls = notifyCalls,
             themeMode = themeMode,
             language = language
         )
@@ -415,6 +438,10 @@ class BlockRepository private constructor(context: Context) {
             putBoolean("block_foreign", newSettings.blockForeignNumbers)
             putBoolean("block_links", newSettings.blockSuspiciousLinksInSms)
             putBoolean("notify_blocked", newSettings.sendNotificationOnBlock)
+            putBoolean("notify_threat_sms", newSettings.notifyThreatSms)
+            putBoolean("notify_otp_sms", newSettings.notifyOtpSms)
+            putBoolean("notify_promo_sms", newSettings.notifyPromoSms)
+            putBoolean("notify_blocked_calls", newSettings.notifyBlockedCalls)
             putString("theme_mode", newSettings.themeMode.name)
             putString("language", newSettings.language.name)
             apply()
@@ -728,14 +755,63 @@ class BlockRepository private constructor(context: Context) {
         return Pair(false, "Lolos filter SMS")
     }
 
-    // --- PEMBACA KOTAK MASUK (INBOX SMS) & SCANNER ---
+    // --- MANAJEMEN STATUS BACA (READ / UNREAD) SMS & MMS ---
+
+    fun isMessageRead(context: Context, id: Long, isMms: Boolean, systemRead: Boolean): Boolean {
+        if (systemRead) return true
+        val prefs = context.getSharedPreferences("hardcorez_read_status", Context.MODE_PRIVATE)
+        val key = if (isMms) "mms_$id" else "sms_$id"
+        return prefs.getBoolean(key, false)
+    }
+
+    fun markMessageAsRead(context: Context, id: Long, isMms: Boolean) {
+        val prefs = context.getSharedPreferences("hardcorez_read_status", Context.MODE_PRIVATE)
+        val key = if (isMms) "mms_$id" else "sms_$id"
+        prefs.edit().putBoolean(key, true).apply()
+
+        if (!isMms) {
+            try {
+                val cv = android.content.ContentValues().apply { put("read", 1) }
+                context.contentResolver.update(
+                    Uri.parse("content://sms/$id"),
+                    cv,
+                    null,
+                    null
+                )
+            } catch (_: Throwable) {
+                // Abaikan jika bukan default SMS app
+            }
+        }
+    }
+
+    fun markAllMessagesAsRead(context: Context, ids: List<Long>) {
+        val prefs = context.getSharedPreferences("hardcorez_read_status", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        ids.forEach { id ->
+            editor.putBoolean("sms_$id", true)
+            editor.putBoolean("mms_$id", true)
+        }
+        editor.apply()
+
+        try {
+            val cv = android.content.ContentValues().apply { put("read", 1) }
+            context.contentResolver.update(
+                Uri.parse("content://sms/inbox"),
+                cv,
+                "read = 0",
+                null
+            )
+        } catch (_: Throwable) {
+            // Abaikan jika bukan default SMS app
+        }
+    }
 
     // --- PEMBACA KOTAK MASUK (INBOX SMS & MMS) & SCANNER ---
 
     fun readInboxSms(context: Context): List<com.hardcorezblocker.app.data.model.SmsMessageItem> {
         val messages = mutableListOf<com.hardcorezblocker.app.data.model.SmsMessageItem>()
         val uri = Uri.parse("content://sms/inbox")
-        val projection = arrayOf("_id", "address", "body", "date")
+        val projection = arrayOf("_id", "address", "body", "date", "read")
 
         // 1. Baca SMS Teks Biasa
         try {
@@ -745,12 +821,15 @@ class BlockRepository private constructor(context: Context) {
                 val addressCol = it.getColumnIndexOrThrow("address")
                 val bodyCol = it.getColumnIndexOrThrow("body")
                 val dateCol = it.getColumnIndexOrThrow("date")
+                val readCol = it.getColumnIndex("read")
 
                 while (it.moveToNext()) {
                     val id = it.getLong(idCol)
                     val sender = it.getString(addressCol) ?: "Unknown"
                     val body = it.getString(bodyCol) ?: ""
                     val timestamp = it.getLong(dateCol)
+                    val systemRead = if (readCol != -1) it.getInt(readCol) == 1 else true
+                    val isRead = isMessageRead(context, id, isMms = false, systemRead = systemRead)
 
                     val cleanSender = sender.trim()
                     val isContact = isNumberInContacts(context, cleanSender)
@@ -772,7 +851,8 @@ class BlockRepository private constructor(context: Context) {
                             timestamp = timestamp,
                             category = category,
                             threatDetail = threatDetail,
-                            isMms = false
+                            isMms = false,
+                            isRead = isRead
                         )
                     )
 
@@ -831,6 +911,8 @@ class BlockRepository private constructor(context: Context) {
                         customReason = customReason
                     )
 
+                    val isRead = isMessageRead(context, mmsId, isMms = true, systemRead = false)
+
                     mmsList.add(
                         com.hardcorezblocker.app.data.model.SmsMessageItem(
                             id = mmsId,
@@ -839,7 +921,8 @@ class BlockRepository private constructor(context: Context) {
                             timestamp = timestamp,
                             category = category,
                             threatDetail = threatDetail,
-                            isMms = true
+                            isMms = true,
+                            isRead = isRead
                         )
                     )
 

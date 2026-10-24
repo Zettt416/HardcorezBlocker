@@ -63,6 +63,8 @@ fun InboxScreen(
     isDefaultSms: Boolean,
     onRequestSmsRole: () -> Unit,
     onRefresh: () -> Unit,
+    onMarkAsRead: (Long, Boolean) -> Unit = { _, _ -> },
+    onMarkAllAsRead: () -> Unit = {},
     onDeleteBatch: (List<Long>) -> Unit,
     onBlockSender: (String) -> Unit = {}
 ) {
@@ -139,25 +141,159 @@ fun InboxScreen(
             title = strings.inboxTitle,
             subtitle = "${messages.size} ${if (strings.tabDashboard == "Dashboard") "SMS read on device" else "total SMS terbaca di ponsel"}",
             action = {
-                IconButton(
-                    onClick = onRefresh,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceElevated)
-                        .border(1.dp, DarkBorder, RoundedCornerShape(10.dp))
-                        .size(38.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(
+                        onClick = {
+                            onMarkAllAsRead()
+                            Toast.makeText(context, strings.toastAllRead, Toast.LENGTH_SHORT).show()
+                        },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DoneAll,
+                            contentDescription = strings.inboxMarkAllRead,
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = strings.inboxMarkAllRead,
+                            color = PrimaryBlue,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
+                        onClick = onRefresh,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(DarkSurfaceElevated)
+                            .border(1.dp, DarkBorder, RoundedCornerShape(10.dp))
+                            .size(38.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         )
 
-        // --- SEARCH & FILTER ROW SERAGAM ---
+        // --- 1. SPOTLIGHT CARD KEAMANAN (PRIORITAS UTAMA / FOCUS POINT) ---
+        if (threatCount > 0 && selectedFilter != InboxFilter.THREATS_ONLY) {
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = DangerRed.copy(alpha = 0.12f)),
+                border = androidx.compose.foundation.BorderStroke(1.2.dp, DangerRed.copy(alpha = 0.55f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+                    .clickable {
+                        selectedFilter = InboxFilter.THREATS_ONLY
+                        selectedIds = emptySet()
+                    }
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(DangerRed.copy(alpha = 0.22f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = DangerRed,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.inboxThreatBannerTitle(threatCount),
+                            color = DangerRed,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 13.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = strings.inboxThreatBannerDesc,
+                            color = TextSecondary,
+                            fontSize = 11.5.sp,
+                            lineHeight = 15.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            selectedFilter = InboxFilter.THREATS_ONLY
+                            selectedIds = emptySet()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(strings.inboxThreatBannerBtn, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        } else if (selectedFilter == InboxFilter.THREATS_ONLY) {
+            // Notice saat sedang memfilter ancaman
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = DangerRed.copy(alpha = 0.10f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.35f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = DangerRed,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Menyaring ${filteredMessages.size} pesan bahaya / scam",
+                            color = DangerRed,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    TextButton(
+                        onClick = { selectedFilter = InboxFilter.ALL },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "Tampilkan Semua",
+                            color = PrimaryBlue,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+
+        // --- 2. SEARCH & FILTER ROW SERAGAM ---
         AppSearchFilterRow(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
@@ -221,12 +357,12 @@ fun InboxScreen(
             }
         )
 
-        // --- FILTER CHIPS BAR ---
+        // --- 3. FILTER CHIPS BAR ---
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
+                .padding(bottom = 10.dp)
         ) {
             item {
                 AppFilterChip(
@@ -302,8 +438,6 @@ fun InboxScreen(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(6.dp))
 
         // --- FILTER ACTION TOOLBAR (HANYA MUNCUL JIKA ADA PESAN DI KATEGORI INI) ---
         if (filteredMessages.isNotEmpty()) {
@@ -458,6 +592,7 @@ fun InboxScreen(
                         isSelected = isChecked,
                         onClick = {
                             activeDetailMessage = msg
+                            onMarkAsRead(msg.id, msg.isMms)
                         },
                         onToggleSelect = {
                             selectedIds = if (isChecked) selectedIds - msg.id else selectedIds + msg.id
@@ -598,195 +733,271 @@ private fun CalmSmsCard(
     val isThreat = message.category == SmsSafetyCategory.SPAM_OR_PHISHING
 
     val borderColor = when {
-        isSelected -> PrimaryBlue.copy(alpha = 0.6f)
-        isThreat -> DangerRed.copy(alpha = 0.35f)
+        isSelected -> PrimaryBlue
+        isThreat -> DangerRed.copy(alpha = 0.60f)
+        !message.isRead -> PrimaryBlue.copy(alpha = 0.50f)
         else -> DarkBorder
+    }
+
+    val cardBg = when {
+        isSelected -> DarkSurfaceVariant
+        isThreat -> DangerRed.copy(alpha = 0.08f)
+        !message.isRead -> DarkSurfaceElevated
+        else -> DarkSurfaceElevated.copy(alpha = 0.65f)
     }
 
     val strings = LocalAppStrings.current
     Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) DarkSurfaceVariant else DarkSurfaceElevated
-        ),
-        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = androidx.compose.foundation.BorderStroke(if (isThreat || isSelected || !message.isRead) 1.5.dp else 1.dp, borderColor),
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            // Header: Checkbox, Sender, Badge, Timestamp
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Kolom Kiri: Checkbox & Avatar vertikal sejajar
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Checkbox(
-                        checked = isSelected,
-                        onCheckedChange = { onToggleSelect() },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = PrimaryBlue,
-                            uncheckedColor = TextMuted
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = { onToggleSelect() },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = PrimaryBlue,
+                        uncheckedColor = TextMuted
+                    ),
+                    modifier = Modifier.size(20.dp)
+                )
+
+                // Avatar Bulat Indikator
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isThreat -> DangerRed.copy(alpha = 0.16f)
+                                message.category == SmsSafetyCategory.OTP_OFFICIAL -> PrimaryBlue.copy(alpha = 0.16f)
+                                message.category == SmsSafetyCategory.PROMO_MARKETING -> WarningAmber.copy(alpha = 0.16f)
+                                message.category == SmsSafetyCategory.SAFE_CONTACT -> ShieldActive.copy(alpha = 0.16f)
+                                else -> DarkSurfaceVariant
+                            }
+                        )
+                        .border(
+                            1.dp,
+                            when {
+                                isThreat -> DangerRed.copy(alpha = 0.45f)
+                                message.category == SmsSafetyCategory.OTP_OFFICIAL -> PrimaryBlue.copy(alpha = 0.45f)
+                                message.category == SmsSafetyCategory.PROMO_MARKETING -> WarningAmber.copy(alpha = 0.45f)
+                                message.category == SmsSafetyCategory.SAFE_CONTACT -> ShieldActive.copy(alpha = 0.45f)
+                                else -> DarkBorder
+                            },
+                            CircleShape
                         ),
-                        modifier = Modifier.size(18.dp)
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isThreat) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = DangerRed,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    } else {
+                        Text(
+                            text = message.sender.take(1).uppercase(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = when (message.category) {
+                                SmsSafetyCategory.OTP_OFFICIAL -> PrimaryBlue
+                                SmsSafetyCategory.PROMO_MARKETING -> WarningAmber
+                                SmsSafetyCategory.SAFE_CONTACT -> ShieldActive
+                                else -> TextSecondary
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            // Kolom Kanan: Seluruh konten pesan (Menggunakan 100% lebar yang tersisa)
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Baris 1: Judul Pengirim & Waktu
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = message.sender,
+                        fontWeight = if (!message.isRead || isThreat) FontWeight.ExtraBold else FontWeight.SemiBold,
+                        color = if (isThreat) DangerRed else TextPrimary,
+                        fontSize = 14.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(CircleShape)
-                            .background(
-                                when (message.category) {
-                                    SmsSafetyCategory.SPAM_OR_PHISHING -> DangerRed.copy(alpha = 0.12f)
-                                    SmsSafetyCategory.OTP_OFFICIAL -> PrimaryBlue.copy(alpha = 0.12f)
-                                    SmsSafetyCategory.PROMO_MARKETING -> WarningAmber.copy(alpha = 0.12f)
-                                    SmsSafetyCategory.SAFE_CONTACT -> ShieldActive.copy(alpha = 0.12f)
-                                    else -> DarkSurfaceVariant
-                                }
-                            ),
-                        contentAlignment = Alignment.Center
+                    Text(
+                        text = timeFormatted,
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Baris 2: Tag Badges (Kategori Bahaya/Promo/OTP + MMS + Indikator Baru)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    AppSafetyBadge(category = message.category)
+
+                    if (message.isMms) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = PromoPurple.copy(alpha = 0.16f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, PromoPurple.copy(alpha = 0.45f))
+                        ) {
+                            Text(
+                                text = "MMS",
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = PromoPurple,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    if (!message.isRead) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = (if (isThreat) DangerRed else PrimaryBlue).copy(alpha = 0.18f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, (if (isThreat) DangerRed else PrimaryBlue).copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(5.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isThreat) DangerRed else PrimaryBlue)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = strings.inboxUnreadBadge.uppercase(),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = if (isThreat) DangerRed else PrimaryBlue
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Baris 3: Banner Ancaman Khusus (Jika terdeteksi bahaya)
+                if (isThreat && message.threatDetail != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = DangerRed.copy(alpha = 0.12f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.35f)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        if (isThreat) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Warning,
                                 contentDescription = null,
                                 tint = DangerRed,
                                 modifier = Modifier.size(15.dp)
                             )
-                        } else {
-                            Text(
-                                text = message.sender.take(1).uppercase(),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = when (message.category) {
-                                    SmsSafetyCategory.OTP_OFFICIAL -> PrimaryBlue
-                                    SmsSafetyCategory.PROMO_MARKETING -> WarningAmber
-                                    SmsSafetyCategory.SAFE_CONTACT -> ShieldActive
-                                    else -> TextSecondary
-                                }
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = message.sender,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (isThreat) DangerRed else TextPrimary,
-                                fontSize = 13.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
                             Spacer(modifier = Modifier.width(6.dp))
-                            AppSafetyBadge(category = message.category)
-                            if (message.isMms) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Surface(
-                                    shape = RoundedCornerShape(4.dp),
-                                    color = PromoPurple.copy(alpha = 0.15f),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, PromoPurple.copy(alpha = 0.4f))
-                                ) {
-                                    Text(
-                                        text = "MMS",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = PromoPurple,
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                    )
-                                }
-                            }
+                            Text(
+                                text = message.threatDetail,
+                                color = DangerRed,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                lineHeight = 15.sp
+                            )
                         }
                     }
                 }
 
-                Text(
-                    text = timeFormatted,
-                    fontSize = 11.sp,
-                    color = TextMuted
-                )
-            }
-
-            // Callout detail ancaman jika phishing
-            if (isThreat && message.threatDetail != null) {
                 Spacer(modifier = Modifier.height(6.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(DangerRed.copy(alpha = 0.08f))
-                        .border(1.dp, DangerRed.copy(alpha = 0.25f), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 8.dp, vertical = 5.dp)
+
+                // Baris 4: Cuplikan Isi Pesan
+                Text(
+                    text = message.body,
+                    color = if (!message.isRead) TextPrimary else TextSecondary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Baris 5: Panduan & Tombol Salin
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "⚠️ ${message.threatDetail}",
-                        color = DangerRed,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
+                        text = if (strings.tabDashboard == "Dashboard") "Tap for blocking & details" else "Ketuk untuk opsi blokir & detail",
+                        color = TextMuted,
+                        fontSize = 11.sp
                     )
-                }
-            }
 
-            Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(
+                            onClick = onCopy,
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = strings.copy,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = strings.copy, color = TextSecondary, fontSize = 12.sp)
+                        }
 
-            // Isi SMS ringkas (maksimal 3 baris dengan ellipsis, detail utuh saat diketuk)
-            Text(
-                text = message.body,
-                color = TextPrimary.copy(alpha = 0.88f),
-                fontSize = 13.sp,
-                lineHeight = 17.sp,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Aksi Salin, Hapus & Panduan Ketuk
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = if (strings.tabDashboard == "Dashboard") "Tap for blocking & details" else "Ketuk untuk opsi blokir & detail",
-                    color = TextMuted,
-                    fontSize = 11.sp
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(
-                        onClick = onCopy,
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = strings.copy,
-                            tint = TextSecondary,
-                            modifier = Modifier.size(13.dp)
-                        )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = strings.copy, color = TextSecondary, fontSize = 12.sp)
-                    }
 
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    IconButton(
-                        onClick = onDeleteSingle,
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DeleteOutline,
-                            contentDescription = strings.delete,
-                            tint = TextMuted,
-                            modifier = Modifier.size(16.dp)
-                        )
+                        IconButton(
+                            onClick = onDeleteSingle,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = strings.delete,
+                                tint = TextMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.components
+package com.hardcorezblocker.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -359,36 +359,62 @@ fun AppFilterChip(
 ) {
     Surface(
         shape = RoundedCornerShape(18.dp),
-        color = if (isSelected) accentColor.copy(alpha = 0.14f) else DarkSurfaceElevated,
+        color = when {
+            isSelected -> accentColor.copy(alpha = 0.22f)
+            hasAlert -> DangerRed.copy(alpha = 0.10f)
+            else -> DarkSurfaceElevated
+        },
         border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = if (isSelected) accentColor.copy(alpha = 0.5f) else if (hasAlert) DangerRed.copy(alpha = 0.4f) else DarkBorder
+            width = if (isSelected) 1.5.dp else if (hasAlert) 1.2.dp else 1.dp,
+            color = when {
+                isSelected -> accentColor
+                hasAlert -> DangerRed.copy(alpha = 0.65f)
+                else -> DarkBorder
+            }
         ),
         modifier = modifier.clickable { onClick() }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+            modifier = Modifier.padding(horizontal = 13.dp, vertical = 6.5.dp)
         ) {
             Text(
                 text = label,
-                fontSize = 13.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (isSelected) accentColor else if (hasAlert) DangerRed else TextSecondary
+                fontSize = 12.5.sp,
+                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                color = when {
+                    isSelected -> accentColor
+                    hasAlert -> DangerRed
+                    else -> TextSecondary
+                },
+                maxLines = 1,
+                softWrap = false
             )
             if (count != null) {
                 Spacer(modifier = Modifier.width(6.dp))
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (isSelected) accentColor.copy(alpha = 0.2f) else DarkSurfaceVariant)
-                        .padding(horizontal = 7.dp, vertical = 2.dp)
+                        .background(
+                            when {
+                                isSelected -> accentColor.copy(alpha = 0.32f)
+                                hasAlert -> DangerRed.copy(alpha = 0.25f)
+                                else -> DarkSurfaceVariant
+                            }
+                        )
+                        .padding(horizontal = 7.dp, vertical = 1.5.dp)
                 ) {
                     Text(
                         text = count.toString(),
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isSelected) accentColor else TextSecondary
+                        fontWeight = FontWeight.Bold,
+                        color = when {
+                            isSelected -> accentColor
+                            hasAlert -> DangerRed
+                            else -> TextSecondary
+                        },
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
             }
@@ -398,6 +424,7 @@ fun AppFilterChip(
 
 /**
  * Reusable Safety Badge untuk kategori SMS dan ancaman keamanan.
+ * Didesain dengan maxLines = 1 agar tidak terhimpit atau teks menjadi cacat.
  */
 @Composable
 fun AppSafetyBadge(
@@ -406,25 +433,29 @@ fun AppSafetyBadge(
 ) {
     val strings = LocalAppStrings.current
     val (label, bg, textCol) = when (category) {
-        com.hardcorezblocker.app.data.model.SmsSafetyCategory.SPAM_OR_PHISHING -> Triple(strings.inboxFilterPhishing, DangerRed.copy(alpha = 0.15f), DangerRed)
-        com.hardcorezblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> Triple(strings.inboxFilterPromo, WarningAmber.copy(alpha = 0.15f), WarningAmber)
-        com.hardcorezblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL -> Triple(strings.inboxFilterOtp, PrimaryBlue.copy(alpha = 0.15f), PrimaryBlue)
-        com.hardcorezblocker.app.data.model.SmsSafetyCategory.SAFE_CONTACT -> Triple(strings.inboxFilterContacts, ShieldActive.copy(alpha = 0.15f), ShieldActive)
+        com.hardcorezblocker.app.data.model.SmsSafetyCategory.SPAM_OR_PHISHING -> Triple(strings.inboxFilterPhishing, DangerRed.copy(alpha = 0.16f), DangerRed)
+        com.hardcorezblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> Triple(strings.inboxFilterPromo, WarningAmber.copy(alpha = 0.16f), WarningAmber)
+        com.hardcorezblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL -> Triple(strings.inboxFilterOtp, PrimaryBlue.copy(alpha = 0.16f), PrimaryBlue)
+        com.hardcorezblocker.app.data.model.SmsSafetyCategory.SAFE_CONTACT -> Triple(strings.inboxFilterContacts, ShieldActive.copy(alpha = 0.16f), ShieldActive)
         com.hardcorezblocker.app.data.model.SmsSafetyCategory.NORMAL, com.hardcorezblocker.app.data.model.SmsSafetyCategory.ALL -> Triple(strings.inboxFilterInfo, DarkSurfaceVariant, TextMuted)
     }
 
-    Box(
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = bg,
+        border = androidx.compose.foundation.BorderStroke(1.dp, textCol.copy(alpha = 0.40f)),
         modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(bg)
-            .padding(horizontal = 7.dp, vertical = 3.dp)
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = textCol
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = textCol,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
         )
     }
 }
+
 

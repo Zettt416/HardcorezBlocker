@@ -124,6 +124,12 @@ interface Strings {
     val inboxBannerSmsRoleBtn: String
     val inboxDeleteConfirmTitle: (Int) -> String
     val inboxDeleteConfirmMsg: String
+    val inboxMarkAllRead: String
+    val toastAllRead: String
+    val inboxThreatBannerTitle: (Int) -> String
+    val inboxThreatBannerDesc: String
+    val inboxThreatBannerBtn: String
+    val inboxUnreadBadge: String
 
     // Rules
     val rulesTitle: String
@@ -221,6 +227,22 @@ interface Strings {
     val settingsSuspiciousLinksDesc: String
     val settingsNotifyTitle: String
     val settingsNotifyDesc: String
+    val settingsSecNotificationControl: String
+    val settingsNotifyThreatTitle: String
+    val settingsNotifyThreatDesc: String
+    val settingsNotifyOtpTitle: String
+    val settingsNotifyOtpDesc: String
+    val settingsNotifyPromoTitle: String
+    val settingsNotifyPromoDesc: String
+    val settingsNotifyCallsTitle: String
+    val settingsNotifyCallsDesc: String
+    val settingsTestBadgeTitle: String
+    val settingsTestBadgeDesc: String
+    val settingsTestBadgeBtn: String
+    val settingsTestBadgeSuccess: String
+    val settingsSystemBadgeTitle: String
+    val settingsSystemBadgeDesc: String
+    val settingsSystemBadgeBtn: String
     val settingsSecPermissions: String
     val settingsPermRole: String
     val settingsPermRoleActive: String
@@ -440,6 +462,12 @@ object IndonesianStrings : Strings {
     override val inboxBannerSmsRoleBtn = "Atur Sekarang"
     override val inboxDeleteConfirmTitle: (Int) -> String = { count -> "Hapus $count Pesan SMS?" }
     override val inboxDeleteConfirmMsg = "Pesan SMS yang dipilih akan dihapus secara permanen dari perangkat Anda."
+    override val inboxMarkAllRead = "Tandai Dibaca"
+    override val toastAllRead = "Semua pesan ditandai telah dibaca"
+    override val inboxThreatBannerTitle: (Int) -> String = { count -> "🚨 $count Pesan Bahaya / Scam Terdeteksi" }
+    override val inboxThreatBannerDesc = "Dicurigai penipuan phishing atau tautan berbahaya. Ketuk untuk menyaring hanya pesan ini."
+    override val inboxThreatBannerBtn = "Lihat Pesan"
+    override val inboxUnreadBadge = "Baru"
 
     override val rulesTitle = "Aturan Pemblokiran"
     override val rulesSubtitle = "Aturan penyaring panggilan & SMS spam"
@@ -531,8 +559,24 @@ object IndonesianStrings : Strings {
     override val settingsForeignDesc = "Tolak otomatis panggilan dari kode negara luar negeri selain +62."
     override val settingsSuspiciousLinksTitle = "Deteksi Tautan Mencurigakan di SMS"
     override val settingsSuspiciousLinksDesc = "Pindai tautan phishing, file APK berbahaya, dan domain scam di pesan."
-    override val settingsNotifyTitle = "Notifikasi Saat Pemblokiran"
-    override val settingsNotifyDesc = "Tampilkan notifikasi senyap saat ada panggilan/SMS yang ditolak."
+    override val settingsNotifyTitle = "Master Notifikasi Pemblokiran"
+    override val settingsNotifyDesc = "Aktifkan/nonaktifkan pengiriman notifikasi dari aplikasi ini."
+    override val settingsSecNotificationControl = "PILIHAN NOTIFIKASI GRANULAR"
+    override val settingsNotifyThreatTitle = "Notifikasi SMS Bahaya / Scam"
+    override val settingsNotifyThreatDesc = "Tampilkan notifikasi saat ada SMS scam/phishing diblokir. Matikan agar diblokir senyap tanpa notif."
+    override val settingsNotifyOtpTitle = "Notifikasi Kode OTP Resmi"
+    override val settingsNotifyOtpDesc = "Tampilkan notifikasi prioritas tinggi saat menerima kode OTP/verifikasi resmi."
+    override val settingsNotifyPromoTitle = "Notifikasi SMS Promo / Iklan"
+    override val settingsNotifyPromoDesc = "Tampilkan notifikasi untuk SMS penawaran paket kuota dan promo resmi operator."
+    override val settingsNotifyCallsTitle = "Notifikasi Panggilan Diblokir"
+    override val settingsNotifyCallsDesc = "Tampilkan notifikasi saat ada panggilan nomor asing/spam yang ditolak."
+    override val settingsTestBadgeTitle = "Uji Notifikasi & Lencana Icon"
+    override val settingsTestBadgeDesc = "Kirim notifikasi simulasi untuk memunculkan badge titik/angka di icon aplikasi launcher."
+    override val settingsTestBadgeBtn = "Uji Coba"
+    override val settingsTestBadgeSuccess = "Notifikasi uji coba dikirim! Cek bilah status dan icon di layar utama."
+    override val settingsSystemBadgeTitle = "Setelan Lencana HP (HyperOS)"
+    override val settingsSystemBadgeDesc = "Buka setelan sistem untuk memastikan opsi 'Lencana Notifikasi' aktif pada aplikasi ini."
+    override val settingsSystemBadgeBtn = "Buka Setelan"
     override val settingsSecPermissions = "STATUS HAK AKSES SISTEM"
     override val settingsPermRole = "Call Screening Resmi"
     override val settingsPermRoleActive = "Aktif (Level Sistem)"
@@ -746,6 +790,12 @@ object EnglishStrings : Strings {
     override val inboxBannerSmsRoleBtn = "Configure Now"
     override val inboxDeleteConfirmTitle: (Int) -> String = { count -> "Delete $count SMS Messages?" }
     override val inboxDeleteConfirmMsg = "Selected SMS messages will be permanently deleted from your device."
+    override val inboxMarkAllRead = "Mark Read"
+    override val toastAllRead = "All messages marked as read"
+    override val inboxThreatBannerTitle: (Int) -> String = { count -> "🚨 $count Threats & Scams Detected" }
+    override val inboxThreatBannerDesc = "Suspected phishing or unsafe links. Tap to isolate and review these messages."
+    override val inboxThreatBannerBtn = "View Threats"
+    override val inboxUnreadBadge = "New"
 
     override val rulesTitle = "Blocking Rules"
     override val rulesSubtitle = "Custom rules filtering spam calls & SMS"
@@ -837,8 +887,24 @@ object EnglishStrings : Strings {
     override val settingsForeignDesc = "Automatically reject calls with foreign country codes other than +62."
     override val settingsSuspiciousLinksTitle = "Detect Suspicious Links in SMS"
     override val settingsSuspiciousLinksDesc = "Scan for phishing links, dangerous APK files, and scam domains in messages."
-    override val settingsNotifyTitle = "Notification on Block"
-    override val settingsNotifyDesc = "Show a silent notification whenever a call or SMS is blocked."
+    override val settingsNotifyTitle = "Master Block Notifications"
+    override val settingsNotifyDesc = "Enable or disable all notifications sent by this app."
+    override val settingsSecNotificationControl = "GRANULAR NOTIFICATION CONTROLS"
+    override val settingsNotifyThreatTitle = "Threat / Scam SMS Notification"
+    override val settingsNotifyThreatDesc = "Show notification when scam/phishing SMS is blocked. Turn off for silent quarantine."
+    override val settingsNotifyOtpTitle = "Official OTP SMS Notification"
+    override val settingsNotifyOtpDesc = "Show high-priority notification with quick-copy for official OTP codes."
+    override val settingsNotifyPromoTitle = "Promo & Marketing SMS Notification"
+    override val settingsNotifyPromoDesc = "Show notification for official commercial carrier promos and offers."
+    override val settingsNotifyCallsTitle = "Blocked Calls Notification"
+    override val settingsNotifyCallsDesc = "Show notification when an unwanted or foreign call is rejected."
+    override val settingsTestBadgeTitle = "Test Notification & App Badge"
+    override val settingsTestBadgeDesc = "Send a test notification to trigger the dot/number badge on the launcher app icon."
+    override val settingsTestBadgeBtn = "Test"
+    override val settingsTestBadgeSuccess = "Test notification sent! Check status bar and home screen icon."
+    override val settingsSystemBadgeTitle = "System Badge Settings (HyperOS)"
+    override val settingsSystemBadgeDesc = "Open system settings to verify 'Notification Badges' is enabled for this app."
+    override val settingsSystemBadgeBtn = "Open Settings"
     override val settingsSecPermissions = "SYSTEM PERMISSIONS STATUS"
     override val settingsPermRole = "Official Call Screening"
     override val settingsPermRoleActive = "Active (System Level)"

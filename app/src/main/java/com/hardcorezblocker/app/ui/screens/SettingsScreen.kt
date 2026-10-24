@@ -305,13 +305,157 @@ fun SettingsScreen(
                     isChecked = settings.blockSuspiciousLinksInSms,
                     onCheckedChange = { viewModel.setBlockSuspiciousLinks(it) }
                 )
-                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+            }
+        }
+
+        // --- 4. KONTROL NOTIFIKASI GRANULAR ---
+        Text(
+            text = strings.settingsSecNotificationControl,
+            color = TextSecondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.8.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Card(
+            colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+            shape = RoundedCornerShape(14.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 18.dp)
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                // Master Toggle Notifikasi
                 SettingSwitchRow(
                     title = strings.settingsNotifyTitle,
                     description = strings.settingsNotifyDesc,
                     isChecked = settings.sendNotificationOnBlock,
                     onCheckedChange = { viewModel.setSendNotificationOnBlock(it) }
                 )
+
+                if (settings.sendNotificationOnBlock) {
+                    HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                    // 1. Notifikasi Scam / Bahaya
+                    SettingSwitchRow(
+                        title = strings.settingsNotifyThreatTitle,
+                        description = strings.settingsNotifyThreatDesc,
+                        isChecked = settings.notifyThreatSms,
+                        onCheckedChange = { viewModel.setNotifyThreatSms(it) }
+                    )
+
+                    HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                    // 2. Notifikasi OTP Resmi
+                    SettingSwitchRow(
+                        title = strings.settingsNotifyOtpTitle,
+                        description = strings.settingsNotifyOtpDesc,
+                        isChecked = settings.notifyOtpSms,
+                        onCheckedChange = { viewModel.setNotifyOtpSms(it) }
+                    )
+
+                    HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                    // 3. Notifikasi Promo & Iklan
+                    SettingSwitchRow(
+                        title = strings.settingsNotifyPromoTitle,
+                        description = strings.settingsNotifyPromoDesc,
+                        isChecked = settings.notifyPromoSms,
+                        onCheckedChange = { viewModel.setNotifyPromoSms(it) }
+                    )
+
+                    HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                    // 4. Notifikasi Panggilan Diblokir
+                    SettingSwitchRow(
+                        title = strings.settingsNotifyCallsTitle,
+                        description = strings.settingsNotifyCallsDesc,
+                        isChecked = settings.notifyBlockedCalls,
+                        onCheckedChange = { viewModel.setNotifyBlockedCalls(it) }
+                    )
+                }
+
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                // Uji Notifikasi & Badge Icon
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.settingsTestBadgeTitle,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = strings.settingsTestBadgeDesc,
+                            color = TextSecondary,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            com.hardcorezblocker.app.HardcorezBlockerApp.sendTestNotification(context)
+                            Toast.makeText(context, strings.settingsTestBadgeSuccess, Toast.LENGTH_LONG).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(strings.settingsTestBadgeBtn, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+
+                // Setelan Lencana Sistem (HyperOS / Android)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.settingsSystemBadgeTitle,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = strings.settingsSystemBadgeDesc,
+                            color = TextSecondary,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                val intent = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                    putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                }
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                val fallback = android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
+                                context.startActivity(fallback)
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(strings.settingsSystemBadgeBtn, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
             }
         }
 

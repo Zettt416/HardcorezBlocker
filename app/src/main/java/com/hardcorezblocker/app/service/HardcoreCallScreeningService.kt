@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.service
+package com.hardcorezblocker.app.service
 
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,6 +9,7 @@ import android.telecom.Call
 import android.telecom.CallScreeningService
 import androidx.core.app.NotificationCompat
 import com.hardcorezblocker.app.HardcorezBlockerApp
+import com.hardcorezblocker.app.R
 import com.hardcorezblocker.app.data.model.BlockedLog
 import com.hardcorezblocker.app.data.model.TargetChannel
 import com.hardcorezblocker.app.data.repository.BlockRepository
@@ -48,7 +49,7 @@ class HardcoreCallScreeningService : CallScreeningService() {
 
             // Kirim notifikasi jika pengguna mengaktifkannya di pengaturan
             val currentSettings = repository.loadSettings()
-            if (currentSettings.sendNotificationOnBlock) {
+            if (currentSettings.sendNotificationOnBlock && currentSettings.notifyBlockedCalls) {
                 val strings = getAppStrings(currentSettings.language)
                 sendBlockedNotification(displayNum, reason, strings)
             }
@@ -103,14 +104,19 @@ class HardcoreCallScreeningService : CallScreeningService() {
         )
 
         val notification = NotificationCompat.Builder(this, HardcorezBlockerApp.CHANNEL_BLOCKED_ID)
-            .setSmallIcon(android.R.drawable.stat_notify_missed_call)
+            .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(strings.notifCallBlockedTitle(number))
             .setContentText(strings.notifCallBlockedReason(reason))
             .setStyle(NotificationCompat.BigTextStyle().bigText(strings.notifCallBlockedBigText(number, reason)))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
+            .setNumber(1)
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
             .build()
+
+        HardcorezBlockerApp.applyMiuiBadge(notification, 1)
+        HardcorezBlockerApp.updateLauncherBadge(this, 1)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(System.currentTimeMillis().toInt(), notification)

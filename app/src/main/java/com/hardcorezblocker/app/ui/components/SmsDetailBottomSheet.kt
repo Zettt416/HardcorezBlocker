@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.components
+package com.hardcorezblocker.app.ui.components
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -131,20 +131,38 @@ fun SmsDetailBottomSheet(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = message.sender,
+                        color = if (isThreat) DangerRed else TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = message.sender,
-                            color = if (isThreat) DangerRed else TextPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
                         AppSafetyBadge(category = message.category)
+                        if (message.isMms) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = PromoPurple.copy(alpha = 0.16f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, PromoPurple.copy(alpha = 0.45f))
+                            ) {
+                                Text(
+                                    text = "MMS",
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = PromoPurple,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = fullTime,
                         color = TextMuted,

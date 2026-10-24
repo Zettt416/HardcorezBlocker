@@ -219,16 +219,32 @@ fun MainAppScreen(
         }
     }
 
+    val settings by viewModel.settings.collectAsState()
     val inboxMessages by viewModel.inboxMessages.collectAsState()
     val logs by viewModel.logs.collectAsState()
-    val threatCount = remember(inboxMessages) {
-        inboxMessages.count { it.category == SmsSafetyCategory.SPAM_OR_PHISHING }
+    val unreadThreats = remember(inboxMessages) {
+        inboxMessages.filter { it.category == SmsSafetyCategory.SPAM_OR_PHISHING && !it.isRead }
     }
+    val unreadThreatCount = unreadThreats.size
     val blockedCount = logs.size
 
-    // Sinkronkan badge launcher icon di home screen (khususnya Xiaomi MIUI/HyperOS)
-    LaunchedEffect(threatCount) {
-        com.hardcorezblocker.app.HardcorezBlockerApp.updateLauncherBadge(context, threatCount)
+    // Tangani perpindahan tab jika dibuka dari notifikasi ancaman
+    LaunchedEffect(Unit) {
+        val intent = (context as? android.app.Activity)?.intent
+        if (intent?.getBooleanExtra("FILTER_THREATS", false) == true) {
+            selectedTab = NavigationTab.INBOX
+        }
+    }
+
+    // Sinkronkan notifikasi sistem dan lencana icon launcher di home screen
+    LaunchedEffect(unreadThreats, settings.sendNotificationOnBlock, settings.notifyThreatSms) {
+        if (settings.sendNotificationOnBlock && settings.notifyThreatSms) {
+            com.hardcorezblocker.app.HardcorezBlockerApp.syncThreatNotification(context, unreadThreats)
+        } else {
+            val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            notificationManager.cancel(com.hardcorezblocker.app.HardcorezBlockerApp.THREAT_NOTIFICATION_ID)
+            com.hardcorezblocker.app.HardcorezBlockerApp.updateLauncherBadge(context, 0)
+        }
     }
 
     Scaffold(
@@ -251,13 +267,13 @@ fun MainAppScreen(
                                 badge = {
                                     when (tab) {
                                         NavigationTab.INBOX -> {
-                                            if (threatCount > 0) {
+                                            if (unreadThreatCount > 0) {
                                                 Badge(
                                                     containerColor = DangerRed,
                                                     contentColor = androidx.compose.ui.graphics.Color.White
                                                 ) {
                                                     Text(
-                                                        text = if (threatCount > 99) "99+" else "$threatCount",
+                                                        text = if (unreadThreatCount > 99) "99+" else "$unreadThreatCount",
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.Bold
                                                     )
@@ -331,6 +347,8 @@ fun MainAppScreen(
                         isDefaultSms = isDefaultSms,
                         onRequestSmsRole = onRequestSmsRole,
                         onRefresh = { viewModel.refreshInbox() },
+                        onMarkAsRead = { id, isMms -> viewModel.markAsRead(id, isMms) },
+                        onMarkAllAsRead = { viewModel.markAllAsRead() },
                         onDeleteBatch = { ids ->
                             viewModel.deleteSmsBatch(ids) { deletedCount ->
                                 Toast.makeText(

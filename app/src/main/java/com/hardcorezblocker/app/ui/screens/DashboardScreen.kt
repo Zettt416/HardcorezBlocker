@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -185,49 +186,61 @@ fun DashboardScreen(
 
         // --- 3. MASTER HERO CARD (KONTROL TUNGGAL & INTUITIF) ---
         Card(
-            colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, DarkBorder, RoundedCornerShape(18.dp))
-                .padding(bottom = 16.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            shieldColor.copy(alpha = if (isShieldActive) 0.18f else 0.08f),
+                            DarkSurfaceElevated
+                        )
+                    )
+                )
+                .border(
+                    width = if (isShieldActive) 1.5.dp else 1.dp,
+                    color = if (isShieldActive) shieldColor.copy(alpha = 0.50f) else DarkBorder,
+                    shape = RoundedCornerShape(20.dp)
+                )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(18.dp)
             ) {
-                // Baris Atas: Icon Shield, Judul Status, dan Master Switch
+                // Baris Atas: Icon Shield Glowing, Judul Status, dan Master Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(shieldColor.copy(alpha = 0.12f))
-                            .border(1.dp, shieldColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp)),
+                            .size(52.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(shieldColor.copy(alpha = 0.16f))
+                            .border(1.5.dp, shieldColor.copy(alpha = 0.45f), RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (isShieldActive) Icons.Default.Shield else Icons.Default.SecurityUpdateWarning,
                             contentDescription = "Shield",
                             tint = shieldColor,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (isShieldActive) strings.dashProtectionActive else strings.dashProtectionInactive,
                             color = TextPrimary,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.ExtraBold
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = if (isShieldActive) {
                                 if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) strings.dashStatusHardcoreDesc else strings.dashStatusSmartDesc
@@ -240,7 +253,7 @@ fun DashboardScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
                     // Master Toggle Switch
                     Switch(
@@ -265,24 +278,58 @@ fun DashboardScreen(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = if (isShieldActive) shieldColor.copy(alpha = 0.20f) else DarkBorder, thickness = 0.8.dp)
                 Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = DarkBorder, thickness = 0.8.dp)
-                Spacer(modifier = Modifier.height(12.dp))
 
                 // Baris Mode Selector (Segmented Pill Tab)
-                Text(
-                    text = strings.dashModeTitle.uppercase(Locale.ROOT),
-                    color = TextMuted,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.8.sp
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = strings.dashModeTitle.uppercase(Locale.ROOT),
+                        color = TextMuted,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    // Active mode badge
+                    if (isShieldActive) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = shieldColor.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, shieldColor.copy(alpha = 0.35f))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.5.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(shieldColor)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) strings.dashModeHardcoreTitle else strings.dashModeSmartTitle,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = shieldColor
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Segmented Control
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     color = DarkSurfaceVariant,
                     border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder),
                     modifier = Modifier.fillMaxWidth()
@@ -299,18 +346,18 @@ fun DashboardScreen(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(if (isHardcoreSelected) ShieldActive.copy(alpha = 0.15f) else Color.Transparent)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isHardcoreSelected) ShieldActive.copy(alpha = 0.22f) else Color.Transparent)
                                 .border(
-                                    width = if (isHardcoreSelected) 1.dp else 0.dp,
-                                    color = if (isHardcoreSelected) ShieldActive.copy(alpha = 0.45f) else Color.Transparent,
-                                    shape = RoundedCornerShape(9.dp)
+                                    width = if (isHardcoreSelected) 1.5.dp else 0.dp,
+                                    color = if (isHardcoreSelected) ShieldActive else Color.Transparent,
+                                    shape = RoundedCornerShape(10.dp)
                                 )
                                 .clickable {
                                     viewModel.setProtectionActive(true)
                                     viewModel.setBlockingMode(BlockingMode.HARDCORE_CONTACTS_ONLY)
                                 }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                                .padding(vertical = 9.dp, horizontal = 6.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
@@ -325,14 +372,14 @@ fun DashboardScreen(
                                         imageVector = Icons.Default.Lock,
                                         contentDescription = null,
                                         tint = if (isHardcoreSelected) ShieldActive else TextSecondary,
-                                        modifier = Modifier.size(13.dp)
+                                        modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
                                         text = strings.dashModeHardcoreTitle,
                                         fontSize = 13.sp,
-                                        fontWeight = if (isHardcoreSelected) FontWeight.Bold else FontWeight.SemiBold,
-                                        color = if (isHardcoreSelected) ShieldActive else TextPrimary,
+                                        fontWeight = if (isHardcoreSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                        color = if (isHardcoreSelected) Color.White else TextPrimary,
                                         maxLines = 1
                                     )
                                 }
@@ -340,8 +387,8 @@ fun DashboardScreen(
                                 Text(
                                     text = strings.dashModeHardcoreSub,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Normal,
-                                    color = if (isHardcoreSelected) ShieldActive.copy(alpha = 0.85f) else TextMuted,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isHardcoreSelected) ShieldActive else TextMuted,
                                     maxLines = 1
                                 )
                             }
@@ -353,18 +400,18 @@ fun DashboardScreen(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(if (isSmartSelected) PrimaryBlue.copy(alpha = 0.15f) else Color.Transparent)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSmartSelected) PrimaryBlue.copy(alpha = 0.22f) else Color.Transparent)
                                 .border(
-                                    width = if (isSmartSelected) 1.dp else 0.dp,
-                                    color = if (isSmartSelected) PrimaryBlue.copy(alpha = 0.45f) else Color.Transparent,
-                                    shape = RoundedCornerShape(9.dp)
+                                    width = if (isSmartSelected) 1.5.dp else 0.dp,
+                                    color = if (isSmartSelected) PrimaryBlue else Color.Transparent,
+                                    shape = RoundedCornerShape(10.dp)
                                 )
                                 .clickable {
                                     viewModel.setProtectionActive(true)
                                     viewModel.setBlockingMode(BlockingMode.SMART_FILTER)
                                 }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                                .padding(vertical = 9.dp, horizontal = 6.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
@@ -379,14 +426,14 @@ fun DashboardScreen(
                                         imageVector = Icons.Default.FilterAlt,
                                         contentDescription = null,
                                         tint = if (isSmartSelected) PrimaryBlue else TextSecondary,
-                                        modifier = Modifier.size(13.dp)
+                                        modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
                                         text = strings.dashModeSmartTitle,
                                         fontSize = 13.sp,
-                                        fontWeight = if (isSmartSelected) FontWeight.Bold else FontWeight.SemiBold,
-                                        color = if (isSmartSelected) PrimaryBlue else TextPrimary,
+                                        fontWeight = if (isSmartSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                        color = if (isSmartSelected) Color.White else TextPrimary,
                                         maxLines = 1
                                     )
                                 }
@@ -394,8 +441,8 @@ fun DashboardScreen(
                                 Text(
                                     text = strings.dashModeSmartSub,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Normal,
-                                    color = if (isSmartSelected) PrimaryBlue.copy(alpha = 0.85f) else TextMuted,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (isSmartSelected) PrimaryBlue else TextMuted,
                                     maxLines = 1
                                 )
                             }
@@ -411,7 +458,7 @@ fun DashboardScreen(
                     color = (if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) ShieldActive else PrimaryBlue).copy(alpha = 0.08f),
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
-                        (if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) ShieldActive else PrimaryBlue).copy(alpha = 0.2f)
+                        (if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) ShieldActive else PrimaryBlue).copy(alpha = 0.22f)
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -440,6 +487,8 @@ fun DashboardScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // --- 4. BENTO STATISTIK INTERAKTIF (KLIK LANGSUNG MENUJU TAB TERKAIT) ---
         Row(
@@ -632,9 +681,10 @@ private fun InteractiveStatCard(
 ) {
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.05f)),
         shape = RoundedCornerShape(16.dp),
-        modifier = modifier.border(1.dp, DarkBorder, RoundedCornerShape(16.dp))
+        border = androidx.compose.foundation.BorderStroke(1.2.dp, color.copy(alpha = 0.30f)),
+        modifier = modifier
     ) {
         Column(
             modifier = Modifier
@@ -648,31 +698,32 @@ private fun InteractiveStatCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(34.dp)
                         .clip(CircleShape)
-                        .background(color.copy(alpha = 0.12f)),
+                        .background(color.copy(alpha = 0.16f))
+                        .border(1.dp, color.copy(alpha = 0.35f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
                         tint = color,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(17.dp)
                     )
                 }
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
-                    tint = color.copy(alpha = 0.75f),
+                    tint = color.copy(alpha = 0.85f),
                     modifier = Modifier.size(13.dp)
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = count,
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
+                color = color,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 24.sp
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
@@ -752,27 +803,29 @@ private fun QuickShortcutCard(
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
-        shape = RoundedCornerShape(12.dp),
-        modifier = modifier.border(1.dp, DarkBorder, RoundedCornerShape(12.dp))
+        shape = RoundedCornerShape(14.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.30f)),
+        modifier = modifier
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(13.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(accentColor.copy(alpha = 0.12f)),
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(accentColor.copy(alpha = 0.15f))
+                    .border(1.dp, accentColor.copy(alpha = 0.35f), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = accentColor,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(19.dp)
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
@@ -784,7 +837,7 @@ private fun QuickShortcutCard(
                     text = title,
                     color = TextPrimary,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(

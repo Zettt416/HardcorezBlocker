@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.data.model
+package com.hardcorezblocker.app.data.model
 
 enum class AppLanguage(val code: String, val displayName: String) {
     INDONESIAN("id", "Bahasa Indonesia"),
@@ -17,7 +17,12 @@ data class BlockSettings(
     val blockForeignNumbers: Boolean = true,
     val blockSuspiciousLinksInSms: Boolean = true,
     val sendNotificationOnBlock: Boolean = true,
+    val notifyThreatSms: Boolean = true,
+    val notifyOtpSms: Boolean = true,
+    val notifyPromoSms: Boolean = false,
+    val notifyBlockedCalls: Boolean = true,
     val themeMode: AppThemeMode = AppThemeMode.LIGHT,
     val language: AppLanguage = AppLanguage.INDONESIAN
 )
+
 

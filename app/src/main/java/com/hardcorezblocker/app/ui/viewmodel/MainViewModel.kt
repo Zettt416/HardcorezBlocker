@@ -82,6 +82,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun markAsRead(id: Long, isMms: Boolean = false) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.markMessageAsRead(getApplication(), id, isMms)
+            _inboxMessages.value = _inboxMessages.value.map {
+                if (it.id == id && it.isMms == isMms) it.copy(isRead = true) else it
+            }
+        }
+    }
+
+    fun markAllAsRead() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val allIds = _inboxMessages.value.map { it.id }
+            repository.markAllMessagesAsRead(getApplication(), allIds)
+            _inboxMessages.value = _inboxMessages.value.map { it.copy(isRead = true) }
+        }
+    }
+
     fun setProtectionActive(active: Boolean) {
         val current = settings.value
         repository.updateSettings(current.copy(isProtectionActive = active))
@@ -105,6 +122,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setSendNotificationOnBlock(enabled: Boolean) {
         val current = settings.value
         repository.updateSettings(current.copy(sendNotificationOnBlock = enabled))
+    }
+
+    fun setNotifyThreatSms(enabled: Boolean) {
+        val current = settings.value
+        repository.updateSettings(current.copy(notifyThreatSms = enabled))
+    }
+
+    fun setNotifyOtpSms(enabled: Boolean) {
+        val current = settings.value
+        repository.updateSettings(current.copy(notifyOtpSms = enabled))
+    }
+
+    fun setNotifyPromoSms(enabled: Boolean) {
+        val current = settings.value
+        repository.updateSettings(current.copy(notifyPromoSms = enabled))
+    }
+
+    fun setNotifyBlockedCalls(enabled: Boolean) {
+        val current = settings.value
+        repository.updateSettings(current.copy(notifyBlockedCalls = enabled))
     }
 
     fun setThemeMode(mode: com.hardcorezblocker.app.data.model.AppThemeMode) {

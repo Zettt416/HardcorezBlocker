@@ -16,6 +16,7 @@ data class SmsMessageItem(
     val timestamp: Long,
     val category: SmsSafetyCategory,
     val threatDetail: String? = null,
-    val isMms: Boolean = false
+    val isMms: Boolean = false,
+    val isRead: Boolean = true
 )
 
