@@ -19,7 +19,15 @@ import com.hardcorezblocker.app.ui.i18n.getAppStrings
 class HardcoreSmsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
+        val action = intent.action
+        if (action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION &&
+            action != Telephony.Sms.Intents.SMS_DELIVER_ACTION) {
+            return
+        }
+
+        val isDefaultSmsApp = Telephony.Sms.getDefaultSmsPackage(context) == context.packageName
+
+        if (action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION && isDefaultSmsApp) {
             return
         }
 
@@ -28,20 +36,20 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
 
         val repository = BlockRepository.getInstance(context)
 
-        // Kelompokkan SMS jika ada pesan panjang (multi-part SMS)
         val fullBody = StringBuilder()
         var sender = ""
+        var timestamp = System.currentTimeMillis()
 
         for (sms in messages) {
             if (sender.isEmpty()) {
                 sender = sms.displayOriginatingAddress ?: sms.originatingAddress ?: "Unknown"
+                timestamp = sms.timestampMillis
             }
             fullBody.append(sms.displayMessageBody ?: sms.messageBody ?: "")
         }
 
         val completeMessage = fullBody.toString()
 
-        // Evaluasi isi pesan
         val (shouldBlock, reason) = repository.evaluateIncomingSms(context, sender, completeMessage)
 
         val cleanSender = sender.replace("\\s".toRegex(), "")
@@ -60,7 +68,6 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
         if (shouldBlock) {
             val snippet = if (completeMessage.length > 80) completeMessage.take(77) + "..." else completeMessage
 
-            // Simpan riwayat SMS spam ke DB
             repository.addLog(
                 BlockedLog(
                     senderOrNumber = sender,
@@ -70,32 +77,37 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
                 )
             )
 
-            // Kirim notifikasi peringatan spam/phishing HANYA jika master aktif dan notifyThreatSms aktif
             if (currentSettings.sendNotificationOnBlock && currentSettings.notifyThreatSms) {
                 sendSmsAlertNotification(context, sender, reason, snippet, strings)
             }
 
-            // Jika memungkinkan di broadcast prioritaskan penghentian (legacy)
             if (isOrderedBroadcast) {
                 abortBroadcast()
             }
         } else {
-            // SMS Tidak Diblokir: Periksa preferensi notifikasi granular
-            if (currentSettings.sendNotificationOnBlock) {
-                when (category) {
-                    com.hardcorezblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL -> {
-                        if (currentSettings.notifyOtpSms) {
-                            val otpCode = BlockRepository.OtpDetector.extractOtp(completeMessage)
-                            sendOtpNotification(context, sender, completeMessage, otpCode, strings)
-                        }
+            if (action == Telephony.Sms.Intents.SMS_DELIVER_ACTION || isDefaultSmsApp) {
+                repository.writeSmsToInbox(context, sender, completeMessage, timestamp)
+            }
+
+            when (category) {
+                com.hardcorezblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL -> {
+                    if (currentSettings.sendNotificationOnBlock && currentSettings.notifyOtpSms) {
+                        val otpCode = BlockRepository.OtpDetector.extractOtp(completeMessage)
+                        sendOtpNotification(context, sender, completeMessage, otpCode, strings)
+                    } else if (isDefaultSmsApp) {
+                        sendStandardIncomingSmsNotification(context, sender, completeMessage)
                     }
-                    com.hardcorezblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> {
-                        if (currentSettings.notifyPromoSms) {
-                            sendPromoNotification(context, sender, completeMessage, strings)
-                        }
+                }
+                com.hardcorezblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> {
+                    if (currentSettings.sendNotificationOnBlock && currentSettings.notifyPromoSms) {
+                        sendPromoNotification(context, sender, completeMessage, strings)
+                    } else if (isDefaultSmsApp) {
+                        sendStandardIncomingSmsNotification(context, sender, completeMessage)
                     }
-                    else -> {
-                        // Normal SMS
+                }
+                else -> {
+                    if (isDefaultSmsApp) {
+                        sendStandardIncomingSmsNotification(context, sender, completeMessage)
                     }
                 }
             }
@@ -183,6 +195,35 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
             .build()
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify((System.currentTimeMillis() % 100000).toInt(), notification)
+    }
+
+    private fun sendStandardIncomingSmsNotification(context: Context, sender: String, body: String) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            (System.currentTimeMillis() % 10000).toInt(),
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_MESSAGES_ID)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle(sender)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+            .build()
+
+        HardcorezBlockerApp.applyMiuiBadge(notification, 1)
+        HardcorezBlockerApp.updateLauncherBadge(context, 1)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify((System.currentTimeMillis() % 100000).toInt(), notification)

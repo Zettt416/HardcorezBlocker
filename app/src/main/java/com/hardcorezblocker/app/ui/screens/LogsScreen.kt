@@ -106,7 +106,6 @@ fun LogsScreen(viewModel: MainViewModel) {
             } else null
         )
 
-        // Search & Filter Row
         AppSearchFilterRow(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
@@ -166,7 +165,6 @@ fun LogsScreen(viewModel: MainViewModel) {
             }
         )
 
-        // Filter Chips Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()

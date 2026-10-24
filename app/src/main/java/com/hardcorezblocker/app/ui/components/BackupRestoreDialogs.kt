@@ -224,7 +224,6 @@ fun ImportRulesDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Status validasi real-time
                 val (statusColor, statusText) = when {
                     parsedCount > 0 -> Pair(ShieldActive, "✅ $parsedCount rules detected")
                     parsedCount == -1 -> Pair(DangerRed, "⚠️ Invalid JSON array format")
@@ -234,7 +233,6 @@ fun ImportRulesDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Opsi Ganti / Timpa
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -261,7 +259,6 @@ fun ImportRulesDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Tombol Aksi
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End

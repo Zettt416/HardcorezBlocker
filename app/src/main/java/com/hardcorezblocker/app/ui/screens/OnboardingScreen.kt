@@ -90,7 +90,7 @@ fun OnboardingScreen(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            // Top Bar: Step Counter & Tombol Lewati
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -129,7 +129,6 @@ fun OnboardingScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Step Content Animated
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -148,13 +147,12 @@ fun OnboardingScreen(
                 }
             }
 
-            // Bottom Navigation: Indicator Dots + Action Buttons
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 12.dp)
             ) {
-                // Indicator Dots
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -175,7 +173,6 @@ fun OnboardingScreen(
                     }
                 }
 
-                // Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -273,7 +270,6 @@ private fun StepWelcome() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 3 Key Advantages
         FeatureItem(
             icon = Icons.Default.PhoneDisabled,
             iconTint = PrimaryBlue,
@@ -323,7 +319,6 @@ private fun StepModes() {
             modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
         )
 
-        // Mode 1: Hardcore
         Card(
             colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
             shape = RoundedCornerShape(14.dp),
@@ -384,7 +379,6 @@ private fun StepModes() {
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Mode 2: Smart Filter
         Card(
             colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
             shape = RoundedCornerShape(14.dp),

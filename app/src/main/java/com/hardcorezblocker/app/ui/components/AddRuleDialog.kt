@@ -65,7 +65,7 @@ fun AddRuleDialog(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 20.dp)
             ) {
-                // Header Dialog
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -92,7 +92,6 @@ fun AddRuleDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Segmented Tabs: Nomor vs Kata Kunci
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = DarkSurfaceVariant,
@@ -148,7 +147,7 @@ fun AddRuleDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (selectedTabId == 0) {
-                    // TAB: NOMOR / AWALAN
+
                     OutlinedTextField(
                         value = pattern,
                         onValueChange = { pattern = it },
@@ -169,7 +168,6 @@ fun AddRuleDialog(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Channel Selector
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -205,7 +203,6 @@ fun AddRuleDialog(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Preset Chips
                     Text(text = strings.dialogQuickPresets, color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                     Spacer(modifier = Modifier.height(6.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -256,7 +253,7 @@ fun AddRuleDialog(
                         shape = RoundedCornerShape(10.dp)
                     )
                 } else {
-                    // TAB: KATA KUNCI SMS
+
                     OutlinedTextField(
                         value = pattern,
                         onValueChange = { pattern = it },
@@ -277,7 +274,6 @@ fun AddRuleDialog(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Preset Chips Kata Kunci
                     Text(text = strings.dialogQuickPresets, color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                     Spacer(modifier = Modifier.height(6.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -332,7 +328,6 @@ fun AddRuleDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Tombol Aksi Bawah Seimbang (50/50 Split)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),

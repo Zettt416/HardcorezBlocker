@@ -68,7 +68,7 @@ fun RuleSimulatorBottomSheet(
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
-            // Header
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -108,7 +108,6 @@ fun RuleSimulatorBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Switcher Mode: Panggilan vs SMS
             Surface(
                 shape = RoundedCornerShape(10.dp),
                 color = DarkSurfaceVariant,
@@ -120,7 +119,7 @@ fun RuleSimulatorBottomSheet(
                         .fillMaxWidth()
                         .padding(4.dp)
                 ) {
-                    // Panggilan
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -155,7 +154,6 @@ fun RuleSimulatorBottomSheet(
                         }
                     }
 
-                    // SMS
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -194,7 +192,6 @@ fun RuleSimulatorBottomSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Input Field
             OutlinedTextField(
                 value = testInput,
                 onValueChange = { testInput = it },
@@ -227,7 +224,6 @@ fun RuleSimulatorBottomSheet(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Quick Test Chips
             Text(
                 text = strings.simQuickSamples,
                 color = TextSecondary,
@@ -256,7 +252,6 @@ fun RuleSimulatorBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Result Display Card
             if (testInput.isBlank()) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),

@@ -20,7 +20,6 @@ import com.hardcorezblocker.app.ui.i18n.getAppStrings
 class HardcoreCallScreeningService : CallScreeningService() {
 
     override fun onScreenCall(details: Call.Details) {
-        // Cek arah panggilan (hanya proses panggilan masuk)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (details.callDirection != Call.Details.DIRECTION_INCOMING) {
                 allowCall(details)
@@ -31,13 +30,11 @@ class HardcoreCallScreeningService : CallScreeningService() {
         val repository = BlockRepository.getInstance(applicationContext)
         val rawNumber = extractPhoneNumber(details)
 
-        // Evaluasi panggilan secara instan
         val (shouldBlock, reason) = repository.evaluateIncomingCall(applicationContext, rawNumber)
 
         if (shouldBlock) {
             val displayNum = rawNumber ?: "Unknown / Hidden"
-            
-            // Catat ke log riwayat pemblokiran lokal
+
             repository.addLog(
                 BlockedLog(
                     senderOrNumber = displayNum,
@@ -47,14 +44,12 @@ class HardcoreCallScreeningService : CallScreeningService() {
                 )
             )
 
-            // Kirim notifikasi jika pengguna mengaktifkannya di pengaturan
             val currentSettings = repository.loadSettings()
             if (currentSettings.sendNotificationOnBlock && currentSettings.notifyBlockedCalls) {
                 val strings = getAppStrings(currentSettings.language)
                 sendBlockedNotification(displayNum, reason, strings)
             }
 
-            // Eksekusi pemutusan panggilan di level OS Android Telecom
             val response = CallResponse.Builder()
                 .setDisallowCall(true)
                 .setRejectCall(true)

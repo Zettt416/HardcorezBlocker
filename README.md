@@ -52,9 +52,12 @@ Mainstream commercial call-blocking apps upload your entire address book, call l
 ### 3. 🧪 On-Device Rule Simulator
 Simulate any hypothetical phone number or SMS body in real-time to preview whether it will be passed, silenced, or quarantined before activating rules.
 
-### 4. 💬 Safe SMS Quarantine & Inbox
+### 4. 💬 Safe SMS Quarantine & Full Messaging Experience
+- **Default SMS App Capabilities**: Fully eligible as your Android Default SMS Provider with native `SMS_DELIVER`, `WAP_PUSH_DELIVER`, and `RESPOND_VIA_MESSAGE` integration.
+- **Automatic Scam Isolation**: When set as Default SMS app, verified spam/phishing never pollutes your system inbox. Legitimate SMS are automatically committed to `Telephony.Sms.Inbox`.
 - **Malicious Link & APK Detection**: Identifies risky patterns (`.apk`, `bit.ly`, `t.me`, `wa.me`) and neutralizes them inside an isolated quarantine view.
 - **1-Tap OTP Extraction**: Automatically detects 4-to-8 digit verification codes with a convenient one-touch copy button.
+- **Minimalist Compose & Quick Reply**: Send new SMS directly via the minimalist FAB dialog, or reply immediately from the message detail bottom sheet without opening third-party apps.
 - **1-Tap Block Sender**: Add any offending sender straight to your blacklist without ever leaving the conversation detail sheet.
 
 ### 5. 🌓 Dynamic Adaptive Theming
@@ -83,8 +86,9 @@ HardcorezBlocker
 │   ├── src/main/java/com/hardcorezblocker/app/
 │   │   ├── data/
 │   │   │   ├── model/         # BlockRule, BlockedLog, BlockSettings, SmsMessageItem
-│   │   │   └── repository/    # BlockRepository (Offline DB & Encrypted Prefs)
-│   │   ├── service/           # HardcoreCallScreeningService & HardcoreSmsReceiver
+│   │   │   └── repository/    # BlockRepository (Offline DB & SharedPreferences)
+│   │   ├── service/           # HardcoreCallScreeningService, HardcoreSmsReceiver,
+│   │   │                      # SmsDeliverReceiver, MmsDeliverReceiver, HeadlessSmsSendService
 │   │   ├── ui/
 │   │   │   ├── components/    # CommonComponents, Dialogs, BottomSheets
 │   │   │   ├── i18n/          # Centralized AppStrings (English & Indonesian)
@@ -98,8 +102,8 @@ HardcorezBlocker
 - **Language**: Kotlin 2.0
 - **UI Toolkit**: Jetpack Compose (Declarative UI) & Material 3
 - **State Management**: Kotlin Coroutines & `StateFlow`
-- **OS Subsystem**: `android.telecom.CallScreeningService`
-- **Local Persistence**: Room SQLite Database & Android SharedPreferences
+- **OS Subsystem**: `android.telecom.CallScreeningService` & Android Telephony Provider
+- **Local Persistence**: SQLite Database & Android SharedPreferences
 - **Independence**: Zero external analytics SDKs, No Firebase, No Google Mobile Ads, No trackers.
 
 ---
@@ -129,24 +133,25 @@ HardcorezBlocker
    ```powershell
    .\gradlew assembleRelease
    ```
-   *Output binary:* `app/build/outputs/apk/release/app-release.apk`
+   *Output binary:* `release/HardcorezBlocker.apk`
 
 4. **Install to Connected Device or Emulator**:
    ```powershell
-   adb install -r app/build/outputs/apk/release/app-release.apk
+   adb install -r release/HardcorezBlocker.apk
    ```
 
 ---
 
 ## 🔐 Permissions Transparency
 
-HardcorezBlocker requests only the bare minimum Android system permissions necessary for call screening and message classification:
+HardcorezBlocker requests only the bare minimum Android system permissions necessary for call screening, SMS filtering, and messaging:
 
 | System Permission | Purpose / Rationale |
 |---|---|
 | `ROLE_CALL_SCREENING` | Grants OS-level authority to screen incoming calls and drop spam before ringing. |
 | `READ_CONTACTS` | Allows on-device verification against your contact book (100% local whitelist, never uploaded). |
 | `RECEIVE_SMS` & `READ_SMS` | Intercepts incoming messages to classify spam, extract OTPs, and quarantine malicious links. |
+| `SEND_SMS` | Enables quick replies and composing outgoing messages directly when acting as default SMS app. |
 | `POST_NOTIFICATIONS` | Displays optional silent heads-up alerts when an intrusion or scam is thwarted. |
 
 > 🛡️ **Privacy Guarantee:** HardcorezBlocker **does not request the `INTERNET` permission**. Your contacts, messages, and call logs can never leave your device.

@@ -89,44 +89,31 @@ class BlockRepository private constructor(context: Context) {
                     TRUSTED_OFFICIAL_DOMAINS.any { lower == it || lower.endsWith(".$it") }
         }
 
-        /**
-         * Memeriksa apakah pengirim adalah nomor telepon seluler pribadi (P2P),
-         * bukan Shortcode operator (3-6 digit) atau Alfanumerik (Nama Brand/Layanan).
-         */
         fun isPersonalMobileNumber(sender: String): Boolean {
             val clean = sender.trim().replace(" ", "").replace("-", "")
-            // Shortcode resmi operator (3 sampai 6 digit angka, misal 3636, 777, 4444, 1166, 97080, 8000, 111, 888) BUKAN nomor pribadi
             if (clean.length in 3..6 && clean.all { it.isDigit() }) {
                 return false
             }
-            // Nomor HP seluler Indonesia: 08xx atau +628xx atau 628xx (10-15 digit)
             if (clean.startsWith("08") && clean.length in 10..14 && clean.all { it.isDigit() }) {
                 return true
             }
             if ((clean.startsWith("+628") || clean.startsWith("628")) && clean.length in 11..15 && clean.drop(1).all { it.isDigit() }) {
                 return true
             }
-            // Nomor telepon internasional dengan awalan + (>= 10 digit)
             if (clean.startsWith("+") && clean.length >= 10 && clean.drop(1).all { it.isDigit() }) {
                 return true
             }
             return false
         }
 
-        /**
-         * Memeriksa apakah sebuah pesan SMS mengandung link/konten phishing berbahaya,
-         * terutama spoofing perbankan (BCA, Mandiri, BRI, dll) atau TLD scam berbahaya.
-         */
         fun detectPhishingThreat(sender: String, body: String): Pair<Boolean, String>? {
             val lowerBody = body.lowercase(Locale.ROOT)
             val lowerSender = sender.lowercase(Locale.ROOT)
 
-            // 1. Deteksi Malware APK
             if (body.contains(".apk", ignoreCase = true)) {
                 return Pair(true, "Malware APK terdeteksi di dalam pesan")
             }
 
-            // 2. Ekstrak URL/Domain dari teks pesan
             val matcher = URL_PATTERN.matcher(body)
             val foundDomains = mutableListOf<String>()
             while (matcher.find()) {
@@ -134,11 +121,10 @@ class BlockRepository private constructor(context: Context) {
                 foundDomains.add(domain)
             }
 
-            // 3. Phishing Perbankan Khusus (BCA Spoofing)
             val isClaimingBca = lowerSender.contains("bca") ||
                     lowerBody.contains("bca") ||
                     lowerBody.contains("bank central asia")
-            
+
             if (isClaimingBca && foundDomains.isNotEmpty()) {
                 val legitimateBcaDomains = listOf("bca.co.id", "klikbca.com", "bca.id")
                 val isOfficialBcaUrl = foundDomains.all { domain ->
@@ -154,7 +140,6 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
 
-            // 4. Phishing Perbankan Lainnya (Mandiri, BRI, BNI, Mega, dll)
             val isClaimingBank = lowerSender.contains("bri") || lowerSender.contains("mandiri") || lowerSender.contains("bni") ||
                     lowerBody.contains("bank mandiri") || lowerBody.contains("bank bri") || lowerBody.contains("bank bni") ||
                     lowerSender.contains("mega") || lowerBody.contains("bank mega")
@@ -173,7 +158,6 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
 
-            // 5. Deteksi TLD mencurigakan yang lazim dipakai scammer (abaikan jika domain resmi operator / instansi)
             for (domain in foundDomains) {
                 val isOfficialDomain = OFFICIAL_OPERATOR_DOMAINS.any { domain == it || domain.endsWith(".$it") } ||
                         TRUSTED_OFFICIAL_DOMAINS.any { domain == it || domain.endsWith(".$it") }
@@ -182,7 +166,6 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
 
-            // 6. Deteksi Kata Kunci Phishing Poin / Rekening Hangus (hanya jika menyertakan link TIDAK resmi)
             val isScamUrgency = (lowerBody.contains("poin") && (lowerBody.contains("hangus") || lowerBody.contains("habis masa") || lowerBody.contains("kadaluarsa") || lowerBody.contains("tukarkan poin") || lowerBody.contains("tukar poin"))) ||
                     lowerBody.contains("voucher kartu kredit") ||
                     lowerBody.contains("rekening anda telah diblokir")
@@ -196,7 +179,6 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
 
-            // 7. Nomor seluler pribadi biasa (08... / +628...) yang mengirim link eksternal mencurigakan
             if (isPersonalMobileNumber(sender) && foundDomains.isNotEmpty()) {
                 val isAllOfficial = foundDomains.all { domain ->
                     OFFICIAL_OPERATOR_DOMAINS.any { domain == it || domain.endsWith(".$it") } ||
@@ -207,7 +189,6 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
 
-            // 8. Kata Kunci Judi Online / Slot / Scam Spesifik
             if (GAMBLING_REGEX.containsMatchIn(body)) {
                 return Pair(true, "Indikasi scam judi online / undian palsu")
             }
@@ -215,9 +196,6 @@ class BlockRepository private constructor(context: Context) {
             return null
         }
 
-        /**
-         * Memeriksa apakah pesan adalah promosi marketing LBA operator, kuota, poin, atau diskon komersial
-         */
         fun isPromoMarketing(sender: String, body: String): Boolean {
             val lowerBody = body.lowercase(Locale.ROOT)
             val lowerSender = sender.lowercase(Locale.ROOT)
@@ -226,28 +204,19 @@ class BlockRepository private constructor(context: Context) {
             if (promoSenders.any { lowerSender.contains(it) }) return true
 
             val promoIndicators = listOf(
-                // Poin, Loyalty, & Hadiah
                 "poin", "point", "points", "tukar poin", "tukarpoin", "perolehan poin",
                 "dapat poin", "bonus poin", "kumpulkan poin", "poin telkomsel", "poin reward",
                 "reward", "rewards", "loyalty", "hadiah", "undian", "gebyar", "rejeki", "menangkan",
-
-                // Kuota, Pulsa, & Paket Operator
                 "kuota", "paket data", "paket internet", "ekstra kuota", "bonus kuota",
                 "paket nelpon", "nelpon puas", "unlimited", "isi ulang", "pulsa", "masa aktif",
                 "perpanjangan paket", "roaming", "tarif hemat", "combo sakti", "*363#", "*888#",
                 "*123#", "*500*", "*606#", "*700#", "mytelkomsel", "myim3", "myxl", "bima+",
-
-                // Diskon, Belanja, Cashback, & Kupon
                 "cashback", "diskon", "promo", "promosi", "kupon", "voucher", "sale",
                 "hemat", "hanya hari ini", "beli 1 gratis 1", "beli 1 dapat", "beli 2 dapat",
                 "gratis 1 jam", "gratis ongkir", "flash sale", "special offer", "spesial untukmu",
                 "penawaran eksklusif", "penawaran terbatas", "khusus hari ini",
-
-                // Finansial Komersial & Pinjol
                 "apply kartu kredit", "paylater", "bunga 0%", "buka tabungan", "bonus s.d",
                 "limit s.d", "dana instan", "limit pinjaman", "cicilan ringan",
-
-                // Iklan LBA & Survey
                 "myads.id", "tsel.id", "tsurvey.id", "upoint.id", "kirim stop", "ketik stop",
                 "s&k berlaku", "syarat & ketentuan", "survei", "responden", "pretzel", "karaoke"
             )
@@ -277,7 +246,6 @@ class BlockRepository private constructor(context: Context) {
         }
     }
 
-    // --- DETEKSI & EKSTRAKSI KODE OTP AKURAT ---
     object OtpDetector {
         private val OTP_PREFIX_REGEX = Regex(
             "(?:kode\\s*(?:otp|verifikasi|otentikasi|keamanan|rahasia|login|masuk|konfirmasi|aktivasi)?|otp\\s*code|verification\\s*code|security\\s*code|authentication\\s*code|login\\s*code|activation\\s*code|confirmation\\s*code|passcode)\\s*(?:anda|kamu|mu|is|adalah|:)?\\s*[:=\\s-]+\\s*([A-Za-z0-9]{4,8})\\b",
@@ -304,34 +272,29 @@ class BlockRepository private constructor(context: Context) {
         fun extractOtp(body: String): String? {
             val lower = body.lowercase(Locale.ROOT)
 
-            // Jika ada kata kunci poin, kuota, diskon, promo tanpa kata OTP, jelas bukan OTP
             if ((lower.contains("poin") || lower.contains("point") || lower.contains("diskon") || lower.contains("kuota")) &&
                 !lower.contains("otp") && !lower.contains("verif") && !lower.contains("kode rahasia")
             ) {
                 return null
             }
 
-            // Google style: G-123456
             val gMatch = GOOGLE_OTP_REGEX.find(body)
             if (gMatch != null && (lower.contains("google") || lower.contains("verif"))) {
                 return gMatch.groupValues[1]
             }
 
-            // Prefix: Kode OTP Anda: 123456
             val pMatch = OTP_PREFIX_REGEX.find(body)
             if (pMatch != null) {
                 val code = pMatch.groupValues[1]
                 if (isValidOtpCode(code, body)) return code
             }
 
-            // Suffix: 123456 adalah kode verifikasi
             val sMatch = OTP_SUFFIX_REGEX.find(body)
             if (sMatch != null) {
                 val code = sMatch.groupValues[1]
                 if (isValidOtpCode(code, body)) return code
             }
 
-            // Fallback jika ada kata kunci OTP jelas
             val hasExplicitOtp = OTP_KEYWORDS.any { lower.contains(it) } || lower.contains("otp")
             if (hasExplicitOtp) {
                 val numberRegex = Regex("\\b(\\d{4,8})\\b")
@@ -348,12 +311,12 @@ class BlockRepository private constructor(context: Context) {
 
         private fun isValidOtpCode(code: String, fullBody: String): Boolean {
             if (code.length !in 4..8) return false
-            if (code.startsWith("08") || code.startsWith("62")) return false // nomor telepon
+            if (code.startsWith("08") || code.startsWith("62")) return false
 
             val idx = fullBody.indexOf(code)
             if (idx > 0) {
                 val prefix = fullBody.substring(maxOf(0, idx - 4), idx).lowercase(Locale.ROOT)
-                if (prefix.contains("rp") || prefix.contains("idr")) return false // nilai uang
+                if (prefix.contains("rp") || prefix.contains("idr")) return false
             }
 
             if (idx + code.length < fullBody.length) {
@@ -362,11 +325,10 @@ class BlockRepository private constructor(context: Context) {
                     suffix.startsWith(" gb") || suffix.startsWith(" mb") ||
                     suffix.startsWith(" kb") || suffix.startsWith(" rb") ||
                     suffix.startsWith(" jt") || suffix.startsWith(" rupiah")) {
-                    return false // besaran poin / kuota
+                    return false
                 }
             }
 
-            // Abaikan tahun kalender (2020..2035) jika tidak ada kata otp langsung di dekatnya
             val intVal = code.toIntOrNull()
             if (intVal != null && intVal in 2020..2035) {
                 val contextAround = fullBody.substring(maxOf(0, idx - 10), minOf(fullBody.length, idx + code.length + 10)).lowercase(Locale.ROOT)
@@ -385,8 +347,6 @@ class BlockRepository private constructor(context: Context) {
             return extractOtp(body) != null
         }
     }
-
-    // --- Settings ---
 
     fun loadSettings(): BlockSettings {
         val isActive = prefs.getBoolean("is_active", true)
@@ -465,8 +425,6 @@ class BlockRepository private constructor(context: Context) {
         prefs.edit().putBoolean("splash_shown", shown).apply()
     }
 
-    // --- Rules CRUD ---
-
     fun refreshRules() {
         val list = mutableListOf<BlockRule>()
         val db = dbHelper.readableDatabase
@@ -525,8 +483,6 @@ class BlockRepository private constructor(context: Context) {
         refreshRules()
     }
 
-    // --- Logs CRUD ---
-
     fun refreshLogs() {
         val list = mutableListOf<BlockedLog>()
         val db = dbHelper.readableDatabase
@@ -538,7 +494,7 @@ class BlockRepository private constructor(context: Context) {
             null,
             null,
             "${BlockDatabaseHelper.COL_LOG_TIMESTAMP} DESC",
-            "200" // Batasi 200 log terbaru agar cepat
+            "200"
         )
         cursor.use { c ->
             while (c.moveToNext()) {
@@ -589,8 +545,6 @@ class BlockRepository private constructor(context: Context) {
         refreshLogs()
     }
 
-    // --- Decision Engine (Deteksi & Evaluasi Instan) ---
-
     fun isNumberInContacts(context: Context, rawNumber: String): Boolean {
         if (rawNumber.isBlank() || rawNumber.any { it.isLetter() }) return false
         val uri = Uri.withAppendedPath(
@@ -609,10 +563,6 @@ class BlockRepository private constructor(context: Context) {
         }
     }
 
-    /**
-     * Evaluasi panggilan masuk (dieksekusi langsung di onScreenCall dalam < 2 ms)
-     * @return Pair(shouldBlock: Boolean, reason: String)
-     */
     fun evaluateIncomingCall(context: Context, rawNumber: String?): Pair<Boolean, String> {
         val settings = loadSettings()
         if (!settings.isProtectionActive || settings.mode == BlockingMode.OFF) {
@@ -624,24 +574,19 @@ class BlockRepository private constructor(context: Context) {
             return Pair(true, "Nomor tersembunyi / Private Number")
         }
 
-        // 1. Cek apakah ada di Kontak Whitelist
         val isContact = isNumberInContacts(context, number)
         if (isContact) {
             return Pair(false, "Nomor tersimpan di buku kontak (Aman)")
         }
 
-        // 2. Jika HARDCORE MODE: Semua nomor non-kontak ditolak otomatis!
         if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) {
             return Pair(true, "Nomor tidak terdaftar di buku kontak (Hardcore Protection)")
         }
 
-        // 3. SMART FILTER MODE:
-        // A. Cek nomor asing (+... yang bukan +62)
         if (settings.blockForeignNumbers && number.startsWith("+") && !number.startsWith("+62")) {
             return Pair(true, "Nomor dari luar negeri / VoIP ($number)")
         }
 
-        // B. Cek daftar aturan database
         val activeRules = rulesFlow.value.filter { it.isEnabled && (it.channel == TargetChannel.CALL_ONLY || it.channel == TargetChannel.BOTH) }
         for (rule in activeRules) {
             when (rule.type) {
@@ -666,7 +611,6 @@ class BlockRepository private constructor(context: Context) {
                             return Pair(true, "Cocok pola regex: ${rule.label}")
                         }
                     } catch (e: Exception) {
-                        // ignore bad regex
                     }
                 }
                 else -> Unit
@@ -676,10 +620,6 @@ class BlockRepository private constructor(context: Context) {
         return Pair(false, "Lolos filter (Aman)")
     }
 
-    /**
-     * Evaluasi SMS Masuk
-     * @return Pair(shouldBlock: Boolean, reason: String)
-     */
     fun detectPhishingThreat(sender: String, body: String): Pair<Boolean, String>? =
         Companion.detectPhishingThreat(sender, body)
 
@@ -689,10 +629,6 @@ class BlockRepository private constructor(context: Context) {
     fun isPromoMarketing(sender: String, body: String): Boolean =
         Companion.isPromoMarketing(sender, body)
 
-    /**
-     * Mengevaluasi apakah pesan SMS masuk harus diblokir secara realtime.
-     * @return Pair(shouldBlock: Boolean, reason: String)
-     */
     fun evaluateIncomingSms(context: Context, sender: String?, messageBody: String?): Pair<Boolean, String> {
         val settings = loadSettings()
         if (!settings.isProtectionActive || settings.mode == BlockingMode.OFF) {
@@ -702,18 +638,15 @@ class BlockRepository private constructor(context: Context) {
         val cleanSender = sender?.trim() ?: "Unknown"
         val body = messageBody?.trim() ?: ""
 
-        // 1. Prioritas Utama: Periksa ancaman phishing / malware berbahaya
         val phishingThreat = detectPhishingThreat(cleanSender, body)
         if (phishingThreat != null) {
             return phishingThreat
         }
 
-        // 2. Jika nomor kontak tersimpan, loloskan
         if (isNumberInContacts(context, cleanSender)) {
             return Pair(false, "Pengirim tersimpan di buku kontak")
         }
 
-        // 3. Cek aturan kustom kata kunci & blacklist pengguna
         val lowerBody = body.lowercase(Locale.ROOT)
         val activeRules = rulesFlow.value.filter { it.isEnabled && (it.channel == TargetChannel.SMS_ONLY || it.channel == TargetChannel.BOTH) }
         for (rule in activeRules) {
@@ -737,7 +670,6 @@ class BlockRepository private constructor(context: Context) {
             }
         }
 
-        // 4. Loloskan pengirim enterprise / shortcode operator resmi / alfanumerik & OTP murni jika tidak terdeteksi bahaya
         val isEnterpriseOrShortcode = !isPersonalMobileNumber(cleanSender)
         val isOtpMessage = OtpDetector.isOtp(body)
 
@@ -745,7 +677,6 @@ class BlockRepository private constructor(context: Context) {
             return Pair(false, "Layanan Resmi / Operator Terverifikasi")
         }
 
-        // 5. Cek tautan mencurigakan umum jika opsi aktif (hanya berlaku untuk nomor seluler pribadi asing)
         if (settings.blockSuspiciousLinksInSms && isPersonalMobileNumber(cleanSender)) {
             if (LINK_PATTERN.matcher(body).find()) {
                 return Pair(true, "SMS nomor pribadi menyertakan tautan")
@@ -754,8 +685,6 @@ class BlockRepository private constructor(context: Context) {
 
         return Pair(false, "Lolos filter SMS")
     }
-
-    // --- MANAJEMEN STATUS BACA (READ / UNREAD) SMS & MMS ---
 
     fun isMessageRead(context: Context, id: Long, isMms: Boolean, systemRead: Boolean): Boolean {
         if (systemRead) return true
@@ -779,7 +708,6 @@ class BlockRepository private constructor(context: Context) {
                     null
                 )
             } catch (_: Throwable) {
-                // Abaikan jika bukan default SMS app
             }
         }
     }
@@ -802,18 +730,14 @@ class BlockRepository private constructor(context: Context) {
                 null
             )
         } catch (_: Throwable) {
-            // Abaikan jika bukan default SMS app
         }
     }
-
-    // --- PEMBACA KOTAK MASUK (INBOX SMS & MMS) & SCANNER ---
 
     fun readInboxSms(context: Context): List<com.hardcorezblocker.app.data.model.SmsMessageItem> {
         val messages = mutableListOf<com.hardcorezblocker.app.data.model.SmsMessageItem>()
         val uri = Uri.parse("content://sms/inbox")
         val projection = arrayOf("_id", "address", "body", "date", "read")
 
-        // 1. Baca SMS Teks Biasa
         try {
             val cursor = context.contentResolver.query(uri, projection, null, null, "date DESC")
             cursor?.use {
@@ -863,11 +787,9 @@ class BlockRepository private constructor(context: Context) {
             android.util.Log.e("HardcorezBlocker", "readInboxSms: gagal membaca inbox SMS", e)
         }
 
-        // 2. Baca Pesan Multimedia & RCS Bergambar (MMS)
         val mmsMessages = readMmsMessages(context)
         messages.addAll(mmsMessages)
 
-        // 3. Urutkan berdasarkan waktu pesan terbaru
         val combined = messages.sortedByDescending { it.timestamp }
         val finalResult = if (combined.size > 1000) combined.take(1000) else combined
         android.util.Log.i("HardcorezBlocker", "readInboxSms: berhasil memuat ${finalResult.size} pesan (SMS & MMS)")
@@ -889,14 +811,10 @@ class BlockRepository private constructor(context: Context) {
                 while (it.moveToNext()) {
                     val mmsId = it.getLong(idCol)
                     val dateSec = it.getLong(dateCol)
-                    // Timestamp MMS di Android disimpan dalam satuan detik (konversi ke ms)
                     val timestamp = if (dateSec < 10000000000L) dateSec * 1000L else dateSec
                     val subject = it.getString(subCol) ?: ""
 
-                    // 1. Ekstrak Pengirim dari tabel alamat MMS (type = 137 / FROM)
                     val sender = extractMmsSender(context, mmsId)
-
-                    // 2. Ekstrak Isi Teks & Payload dari tabel part MMS
                     val body = extractMmsBody(context, mmsId, subject)
 
                     val cleanSender = sender.trim()
@@ -941,7 +859,7 @@ class BlockRepository private constructor(context: Context) {
             val cursor = context.contentResolver.query(
                 addrUri,
                 arrayOf("address", "type"),
-                "type = 137", // 137 = PduHeaders.FROM
+                "type = 137",
                 null,
                 null
             )
@@ -949,11 +867,10 @@ class BlockRepository private constructor(context: Context) {
                 if (it.moveToFirst()) {
                     val rawAddress = it.getString(0) ?: ""
                     if (rawAddress.isNotBlank() && !rawAddress.contains("insert-address-token", ignoreCase = true)) {
-                        // Jika pengirim berasal dari bot RBM / RCS bot (misal: bank_mega_jbzkrafs_agent@rbm.goog)
                         if (rawAddress.contains("@rbm.", ignoreCase = true)) {
                             val botPrefix = rawAddress.substringBefore("_agent@")
                                 .substringBefore("@")
-                                .replace(Regex("_[a-z0-9]{6,}$"), "") // hilangkan token acak
+                                .replace(Regex("_[a-z0-9]{6,}$"), "")
                             val formatted = botPrefix.split("_", "-")
                                 .filter { part -> part.isNotBlank() }
                                 .joinToString(" ") { part -> part.replaceFirstChar { c -> c.uppercase() } }
@@ -964,7 +881,6 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
         } catch (e: Exception) {
-            // Ignore
         }
         return "MMS"
     }
@@ -1006,7 +922,6 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
         } catch (e: Exception) {
-            // Ignore
         }
 
         val result = bodyBuilder.toString().trim()
@@ -1053,7 +968,6 @@ class BlockRepository private constructor(context: Context) {
         }
     }
 
-    // --- PENGHAPUSAN MASSAL SMS / MMS DARI KOTAK MASUK SISTEM ---
     fun deleteSmsBatch(context: Context, ids: List<Long>): Int {
         var count = 0
         try {
@@ -1068,12 +982,54 @@ class BlockRepository private constructor(context: Context) {
                 }
             }
         } catch (e: Exception) {
-            // Abaikan kegagalan izin atau record yang sudah terhapus
         }
         return count
     }
 
-    // --- SIMULATOR EVALUASI ATURAN & PENGUJIAN ---
+    fun writeSmsToInbox(context: Context, sender: String, body: String, timestamp: Long): Uri? {
+        return try {
+            val values = ContentValues().apply {
+                put(android.provider.Telephony.Sms.Inbox.ADDRESS, sender)
+                put(android.provider.Telephony.Sms.Inbox.BODY, body)
+                put(android.provider.Telephony.Sms.Inbox.DATE, timestamp)
+                put(android.provider.Telephony.Sms.Inbox.READ, 0)
+                put(android.provider.Telephony.Sms.Inbox.SEEN, 0)
+            }
+            context.contentResolver.insert(android.provider.Telephony.Sms.Inbox.CONTENT_URI, values)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun sendSms(context: Context, recipient: String, messageText: String): Boolean {
+        return try {
+            val smsManager = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                context.getSystemService(android.telephony.SmsManager::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                android.telephony.SmsManager.getDefault()
+            }
+            val parts = smsManager.divideMessage(messageText)
+            if (parts.size > 1) {
+                smsManager.sendMultipartTextMessage(recipient, null, parts, null, null)
+            } else {
+                smsManager.sendTextMessage(recipient, null, messageText, null, null)
+            }
+
+            val values = ContentValues().apply {
+                put(android.provider.Telephony.Sms.Sent.ADDRESS, recipient)
+                put(android.provider.Telephony.Sms.Sent.BODY, messageText)
+                put(android.provider.Telephony.Sms.Sent.DATE, System.currentTimeMillis())
+                put(android.provider.Telephony.Sms.Sent.READ, 1)
+                put(android.provider.Telephony.Sms.Sent.STATUS, android.provider.Telephony.Sms.STATUS_COMPLETE)
+            }
+            context.contentResolver.insert(android.provider.Telephony.Sms.Sent.CONTENT_URI, values)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     data class SimulationResult(
         val isBlocked: Boolean,
         val reason: String,
@@ -1131,7 +1087,6 @@ class BlockRepository private constructor(context: Context) {
         }
     }
 
-    // --- CADANGAN & PEMULIHAN ATURAN (BACKUP & RESTORE JSON) ---
     fun exportRulesJson(): String {
         val array = org.json.JSONArray()
         for (rule in rulesFlow.value) {

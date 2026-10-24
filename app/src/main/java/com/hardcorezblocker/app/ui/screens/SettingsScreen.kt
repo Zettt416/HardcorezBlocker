@@ -55,13 +55,12 @@ fun SettingsScreen(
     }
 
     ScreenContainer(scrollable = true) {
-        // AppHeader
+
         AppHeader(
             title = strings.settingsTitle,
             subtitle = strings.settingsSubtitle
         )
 
-        // --- 1. SECTION: TEMA TAMPILAN (LIGHT / DARK / SYSTEM) ---
         Text(
             text = strings.settingsSecTheme,
             color = TextSecondary,
@@ -94,7 +93,6 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Segmented Theme Selector (3 Kapsul)
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = DarkSurfaceVariant,
@@ -148,7 +146,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 2. SECTION: BAHASA APLIKASI (INDONESIAN / ENGLISH) ---
         Text(
             text = strings.settingsSecLanguage,
             color = TextSecondary,
@@ -181,7 +178,6 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Segmented Language Selector (2 Kapsul: ID & EN)
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = DarkSurfaceVariant,
@@ -225,7 +221,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 3. SECTION: STATUS HAK AKSES SISTEM ---
         Text(
             text = strings.settingsSecPermissions,
             color = TextSecondary,
@@ -273,7 +268,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 4. SECTION: PREFERENSI PERLINDUNGAN ---
         Text(
             text = strings.settingsSecFilters,
             color = TextSecondary,
@@ -308,7 +302,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 4. KONTROL NOTIFIKASI GRANULAR ---
         Text(
             text = strings.settingsSecNotificationControl,
             color = TextSecondary,
@@ -326,7 +319,7 @@ fun SettingsScreen(
                 .padding(bottom = 18.dp)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                // Master Toggle Notifikasi
+
                 SettingSwitchRow(
                     title = strings.settingsNotifyTitle,
                     description = strings.settingsNotifyDesc,
@@ -337,7 +330,6 @@ fun SettingsScreen(
                 if (settings.sendNotificationOnBlock) {
                     HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
 
-                    // 1. Notifikasi Scam / Bahaya
                     SettingSwitchRow(
                         title = strings.settingsNotifyThreatTitle,
                         description = strings.settingsNotifyThreatDesc,
@@ -347,7 +339,6 @@ fun SettingsScreen(
 
                     HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
 
-                    // 2. Notifikasi OTP Resmi
                     SettingSwitchRow(
                         title = strings.settingsNotifyOtpTitle,
                         description = strings.settingsNotifyOtpDesc,
@@ -357,7 +348,6 @@ fun SettingsScreen(
 
                     HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
 
-                    // 3. Notifikasi Promo & Iklan
                     SettingSwitchRow(
                         title = strings.settingsNotifyPromoTitle,
                         description = strings.settingsNotifyPromoDesc,
@@ -367,7 +357,6 @@ fun SettingsScreen(
 
                     HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
 
-                    // 4. Notifikasi Panggilan Diblokir
                     SettingSwitchRow(
                         title = strings.settingsNotifyCallsTitle,
                         description = strings.settingsNotifyCallsDesc,
@@ -378,7 +367,6 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
 
-                // Uji Notifikasi & Badge Icon
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -415,7 +403,6 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
 
-                // Setelan Lencana Sistem (HyperOS / Android)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -459,7 +446,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 5. SECTION: CADANGAN & PEMULIHAN ATURAN ---
         Text(
             text = strings.settingsSecBackup,
             color = TextSecondary,
@@ -478,7 +464,7 @@ fun SettingsScreen(
                 .padding(bottom = 18.dp)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                // Row Ekspor
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -518,7 +504,6 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 12.dp))
 
-                // Row Impor
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -552,7 +537,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 6. SECTION: PRIVASI & GARANSI ON-DEVICE ---
         Card(
             colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
             shape = RoundedCornerShape(14.dp),
@@ -595,7 +579,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 7. SECTION: PANDUAN & BANTUAN ---
         Card(
             colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
             shape = RoundedCornerShape(14.dp),

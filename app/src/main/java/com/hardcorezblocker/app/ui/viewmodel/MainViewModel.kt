@@ -82,6 +82,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun sendSmsReply(recipient: String, text: String, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val success = repository.sendSms(getApplication(), recipient, text)
+            if (success) {
+                refreshInbox()
+            }
+            launch(Dispatchers.Main) {
+                onComplete(success)
+            }
+        }
+    }
+
     fun markAsRead(id: Long, isMms: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.markMessageAsRead(getApplication(), id, isMms)

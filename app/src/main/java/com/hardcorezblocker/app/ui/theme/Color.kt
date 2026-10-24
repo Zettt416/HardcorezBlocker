@@ -4,9 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-/**
- * Model warna dinamis yang beradaptasi dengan Light Mode dan Dark Mode.
- */
 data class AppColors(
     val background: Color,
     val surface: Color,
@@ -19,7 +16,6 @@ data class AppColors(
     val isDark: Boolean
 )
 
-// --- Light Color Palette (Bersih, Cerah, Elegan - Google Messages / Nothing OS style) ---
 val LightAppColors = AppColors(
     background = Color(0xFFF6F8FA),
     surface = Color(0xFFFFFFFF),
@@ -32,7 +28,6 @@ val LightAppColors = AppColors(
     isDark = false
 )
 
-// --- Dark Color Palette (Deep OLED Slate - Kontras Tinggi, Nyaman di Malam Hari) ---
 val DarkAppColors = AppColors(
     background = Color(0xFF0B0F17),
     surface = Color(0xFF131A26),
@@ -47,7 +42,6 @@ val DarkAppColors = AppColors(
 
 val LocalAppColors = staticCompositionLocalOf { LightAppColors }
 
-// --- Dynamic Color Accessors (Kompatibel dengan semua komponen yang sudah ada) ---
 val DarkBackground: Color
     @Composable get() = LocalAppColors.current.background
 
@@ -72,7 +66,6 @@ val TextSecondary: Color
 val TextMuted: Color
     @Composable get() = LocalAppColors.current.textMuted
 
-// --- Aksen Semantik Konsisten (Aman & Kontras Tinggi di Light maupun Dark Mode) ---
 val PrimaryBlue = Color(0xFF0284C7)
 val CyberBlue = Color(0xFF0369A1)
 val AccentIndigo = Color(0xFF6366F1)

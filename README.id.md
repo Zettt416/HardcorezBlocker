@@ -52,9 +52,12 @@ Aplikasi pemblokir komersial umum mengharuskan Anda mengunggah seluruh kontak da
 ### 3. 🧪 Simulator Evaluasi Interaktif
 Uji coba apakah nomor panggilan atau isi pesan SMS tertentu akan dicegat atau diloloskan secara instan sebelum aturan benar-benar diterapkan.
 
-### 4. 💬 Kotak Karantina & Pengelola SMS
+### 4. 💬 Kotak Karantina & Pengelola SMS Lengkap
+- **Kompatibilitas Penuh Default SMS App**: Memenuhi seluruh spesifikasi resmi Android Default SMS Provider (`SMS_DELIVER`, `WAP_PUSH_DELIVER`, dan `RESPOND_VIA_MESSAGE`).
+- **Isolasi Spam Otomatis**: Saat aktif sebagai Default SMS, pesan spam dan phishing tidak pernah masuk atau mengotori database inbox sistem. Pesan bersih langsung disimpan ke `Telephony.Sms.Inbox`.
 - **Deteksi Tautan Mencurigakan**: Mengidentifikasi pesan dengan tautan berbahaya (`.apk`, `bit.ly`, `t.me`, `wa.me`) dan mengisolasinya.
 - **Ekstraksi Otomatis Kode OTP**: Menyaring kode OTP 4-8 digit dengan tombol 1-klik salin ke clipboard.
+- **Kirim & Balas Cepat SMS Minimalis**: Tulis SMS baru langsung via FAB dialog minimalis atau balas cepat langsung dari bottom sheet detail tanpa membuka aplikasi SMS pihak ketiga.
 - **1-Klik Blokir Nomor Pengirim**: Tambahkan nomor pengirim spam langsung ke daftar blokir tanpa keluar dari aplikasi.
 
 ### 5. 🌓 Mode Visual Dinamis
@@ -84,7 +87,8 @@ HardcorezBlocker
 │   │   ├── data/
 │   │   │   ├── model/         # BlockRule, BlockedLog, BlockSettings, SmsMessageItem
 │   │   │   └── repository/    # BlockRepository (Offline DB & SharedPreferences)
-│   │   ├── service/           # HardcoreCallScreeningService & HardcoreSmsReceiver
+│   │   ├── service/           # HardcoreCallScreeningService, HardcoreSmsReceiver,
+│   │   │                      # SmsDeliverReceiver, MmsDeliverReceiver, HeadlessSmsSendService
 │   │   ├── ui/
 │   │   │   ├── components/    # CommonComponents, Dialogs, BottomSheets
 │   │   │   ├── i18n/          # Centralized AppStrings (Indonesian & English)
@@ -98,8 +102,8 @@ HardcorezBlocker
 - **Bahasa**: Kotlin 2.0
 - **UI Toolkit**: Jetpack Compose (Declarative UI) & Material 3
 - **State Management**: Kotlin Coroutines & `StateFlow`
-- **Integrasi OS**: `android.telecom.CallScreeningService`
-- **Penyimpanan**: SQLite Room Database & Android Encrypted Preferences
+- **Integrasi OS**: `android.telecom.CallScreeningService` & Android Telephony Provider
+- **Penyimpanan**: SQLite Database & Android SharedPreferences
 - **Kemandirian**: Zero External Network SDKs, No Firebase, No Google Play Services Ads, No Trackers.
 
 ---
@@ -129,24 +133,25 @@ HardcorezBlocker
    ```powershell
    .\gradlew assembleRelease
    ```
-   *File output APK:* `app/build/outputs/apk/release/app-release.apk`
+   *File output APK:* `release/HardcorezBlocker.apk`
 
 4. **Instal ke Perangkat / Emulator**:
    ```powershell
-   adb install -r app/build/outputs/apk/release/app-release.apk
+   adb install -r release/HardcorezBlocker.apk
    ```
 
 ---
 
 ## 🔐 Transparansi Hak Akses Sistem
 
-Aplikasi ini hanya meminta izin resmi yang mutlak dibutuhkan untuk fungsi keamanan:
+Aplikasi ini hanya meminta izin resmi yang mutlak dibutuhkan untuk fungsi keamanan dan perpesanan:
 
 | Hak Akses (Permission) | Mengapa Dibutuhkan? (Rationale) |
 |---|---|
 | `ROLE_CALL_SCREENING` | Memberikan wewenang sistem kepada HardcorezBlocker untuk menolak panggilan spam sebelum berdering. |
 | `READ_CONTACTS` | Memverifikasi apakah nomor penelepon ada di buku kontak Anda (Whitelist lokal, tidak pernah diunggah). |
 | `RECEIVE_SMS` & `READ_SMS` | Menganalisis SMS masuk secara lokal untuk karantina pesan phishing dan ekstraksi OTP. |
+| `SEND_SMS` | Mengirim SMS balasan langsung atau pesan baru saat ditugaskan sebagai aplikasi SMS default. |
 | `POST_NOTIFICATIONS` | Menampilkan pemberitahuan senyap opsional saat panggilan atau SMS scam berhasil diblokir. |
 
 > 🛡️ **Jaminan Privasi:** Aplikasi ini sama sekali tidak memiliki izin `INTERNET`. Kontak dan riwayat Anda tidak akan pernah bisa meninggalkan ponsel Anda.

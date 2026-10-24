@@ -76,7 +76,7 @@ fun RulesScreen(viewModel: MainViewModel) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         ScreenContainer {
-            // Reusable Header
+
             AppHeader(
                 title = strings.rulesTitle,
                 subtitle = strings.rulesSubtitleFormatted(rules.size),
@@ -109,7 +109,6 @@ fun RulesScreen(viewModel: MainViewModel) {
                 }
             )
 
-            // Reusable Search & Filter Row
             AppSearchFilterRow(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it },
@@ -164,7 +163,6 @@ fun RulesScreen(viewModel: MainViewModel) {
                 }
             )
 
-            // Reusable Filter Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -194,7 +192,6 @@ fun RulesScreen(viewModel: MainViewModel) {
                 )
             }
 
-            // Banner Panduan Cepat (Guideline)
             RuleGuidelineCard(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
@@ -233,7 +230,6 @@ fun RulesScreen(viewModel: MainViewModel) {
             }
         }
 
-        // Floating Action Button
         FloatingActionButton(
             onClick = { showAddDialog = true },
             containerColor = PrimaryBlue,
@@ -266,9 +262,6 @@ fun RulesScreen(viewModel: MainViewModel) {
     }
 }
 
-/**
- * Banner Panduan Cepat interaktif yang menjelaskan format aturan pemblokiran.
- */
 @Composable
 fun RuleGuidelineCard(
     modifier: Modifier = Modifier
@@ -460,7 +453,7 @@ fun RuleItemCard(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 1. Icon visual tipe aturan
+
             Box(
                 modifier = Modifier
                     .size(38.dp)
@@ -495,13 +488,12 @@ fun RuleItemCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // 2. Text (Badges, Pattern, Label)
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Type Badge
+
                     Surface(
                         color = when (rule.type) {
                             RuleType.PREFIX -> PrimaryBlue.copy(alpha = 0.12f)
@@ -534,7 +526,6 @@ fun RuleItemCard(
                         )
                     }
 
-                    // Channel Badge
                     Surface(
                         color = DarkSurfaceVariant,
                         shape = RoundedCornerShape(4.dp),
@@ -575,7 +566,6 @@ fun RuleItemCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // 3. Toggle Switch
             Switch(
                 checked = rule.isEnabled,
                 onCheckedChange = onToggle,
@@ -590,7 +580,6 @@ fun RuleItemCard(
 
             Spacer(modifier = Modifier.width(6.dp))
 
-            // 4. Delete Button
             IconButton(
                 onClick = onDelete,
                 modifier = Modifier

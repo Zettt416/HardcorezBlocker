@@ -18,7 +18,6 @@ class BlockDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE
         const val TABLE_RULES = "block_rules"
         const val TABLE_LOGS = "block_logs"
 
-        // Rules Columns
         const val COL_RULE_ID = "id"
         const val COL_RULE_PATTERN = "pattern"
         const val COL_RULE_TYPE = "type"
@@ -27,7 +26,6 @@ class BlockDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE
         const val COL_RULE_ENABLED = "is_enabled"
         const val COL_RULE_CREATED_AT = "created_at"
 
-        // Logs Columns
         const val COL_LOG_ID = "id"
         const val COL_LOG_SENDER = "sender_number"
         const val COL_LOG_CHANNEL = "channel"
@@ -63,7 +61,6 @@ class BlockDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE
         db.execSQL(createRulesTable)
         db.execSQL(createLogsTable)
 
-        // Seed initial default scam & fraud defense rules
         insertDefaultRule(db, "+234", RuleType.PREFIX, TargetChannel.CALL_ONLY, "Panggilan Internasional Spam (+234)")
         insertDefaultRule(db, "+1", RuleType.PREFIX, TargetChannel.CALL_ONLY, "Nomor VoIP Asing (+1)")
         insertDefaultRule(db, "+44", RuleType.PREFIX, TargetChannel.CALL_ONLY, "Nomor Asing (+44)")

@@ -102,7 +102,6 @@ fun SplashScreen(
             )
         }
 
-        // Footer di bagian bawah
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)

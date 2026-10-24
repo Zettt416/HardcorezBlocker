@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -66,7 +69,8 @@ fun InboxScreen(
     onMarkAsRead: (Long, Boolean) -> Unit = { _, _ -> },
     onMarkAllAsRead: () -> Unit = {},
     onDeleteBatch: (List<Long>) -> Unit,
-    onBlockSender: (String) -> Unit = {}
+    onBlockSender: (String) -> Unit = {},
+    onSendReply: ((String, String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val strings = LocalAppStrings.current
@@ -78,6 +82,7 @@ fun InboxScreen(
     var showConfirmDeleteFilterDialog by remember { mutableStateOf(false) }
     var pendingDeleteIds by remember { mutableStateOf<List<Long>>(emptyList()) }
     var activeDetailMessage by remember { mutableStateOf<SmsMessageItem?>(null) }
+    var showComposeDialog by remember { mutableStateOf(false) }
 
     val threatMessages = remember(messages) {
         messages.filter { it.category == SmsSafetyCategory.SPAM_OR_PHISHING }
@@ -136,7 +141,8 @@ fun InboxScreen(
         }
     }
 
-    ScreenContainer {
+    Box(modifier = Modifier.fillMaxSize()) {
+        ScreenContainer {
         AppHeader(
             title = strings.inboxTitle,
             subtitle = "${messages.size} ${if (strings.tabDashboard == "Dashboard") "SMS read on device" else "total SMS terbaca di ponsel"}",
@@ -183,7 +189,6 @@ fun InboxScreen(
             }
         )
 
-        // --- 1. SPOTLIGHT CARD KEAMANAN (PRIORITAS UTAMA / FOCUS POINT) ---
         if (threatCount > 0 && selectedFilter != InboxFilter.THREATS_ONLY) {
             Card(
                 shape = RoundedCornerShape(14.dp),
@@ -246,7 +251,7 @@ fun InboxScreen(
                 }
             }
         } else if (selectedFilter == InboxFilter.THREATS_ONLY) {
-            // Notice saat sedang memfilter ancaman
+
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = DangerRed.copy(alpha = 0.10f),
@@ -293,7 +298,6 @@ fun InboxScreen(
             }
         }
 
-        // --- 2. SEARCH & FILTER ROW SERAGAM ---
         AppSearchFilterRow(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
@@ -357,7 +361,6 @@ fun InboxScreen(
             }
         )
 
-        // --- 3. FILTER CHIPS BAR ---
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
@@ -439,7 +442,6 @@ fun InboxScreen(
             }
         }
 
-        // --- FILTER ACTION TOOLBAR (HANYA MUNCUL JIKA ADA PESAN DI KATEGORI INI) ---
         if (filteredMessages.isNotEmpty()) {
             Surface(
                 shape = RoundedCornerShape(10.dp),
@@ -496,7 +498,6 @@ fun InboxScreen(
             Spacer(modifier = Modifier.height(10.dp))
         }
 
-        // --- MULTI-SELECT BAR JIKA USER MEMILIH BEBERAPA ITEM ---
         AnimatedVisibility(visible = selectedIds.isNotEmpty()) {
             Surface(
                 shape = RoundedCornerShape(10.dp),
@@ -548,7 +549,6 @@ fun InboxScreen(
             }
         }
 
-        // --- DAFTAR SMS ---
         if (filteredMessages.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -611,6 +611,33 @@ fun InboxScreen(
         }
     }
 
+    FloatingActionButton(
+            onClick = { showComposeDialog = true },
+            containerColor = PrimaryBlue,
+            contentColor = Color.White,
+            shape = CircleShape,
+            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 20.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = strings.inboxComposeSmsTitle,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+    }
+
+    if (showComposeDialog) {
+        ComposeSmsDialog(
+            onDismiss = { showComposeDialog = false },
+            onSend = { recipient, msg ->
+                onSendReply?.invoke(recipient, msg)
+            }
+        )
+    }
+
     if (activeDetailMessage != null) {
         SmsDetailBottomSheet(
             message = activeDetailMessage!!,
@@ -627,11 +654,11 @@ fun InboxScreen(
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clipboard.setPrimaryClip(ClipData.newPlainText("SMS Content", text))
                 Toast.makeText(context, strings.toastCopiedText, Toast.LENGTH_SHORT).show()
-            }
+            },
+            onSendReply = onSendReply
         )
     }
 
-    // --- DIALOG KONFIRMASI HAPUS SEMUA DI FILTER INI ---
     if (showConfirmDeleteFilterDialog) {
         val filterTitle = selectedFilter.getLabel(strings)
 
@@ -674,7 +701,6 @@ fun InboxScreen(
         )
     }
 
-    // --- DIALOG IZIN DEFAULT SMS SISTEM ANDROID ---
     if (showPermissionDialog) {
         AlertDialog(
             onDismissRequest = { showPermissionDialog = false },
@@ -761,7 +787,7 @@ private fun CalmSmsCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.Top
         ) {
-            // Kolom Kiri: Checkbox & Avatar vertikal sejajar
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -776,7 +802,6 @@ private fun CalmSmsCard(
                     modifier = Modifier.size(20.dp)
                 )
 
-                // Avatar Bulat Indikator
                 Box(
                     modifier = Modifier
                         .size(34.dp)
@@ -828,11 +853,10 @@ private fun CalmSmsCard(
 
             Spacer(modifier = Modifier.width(10.dp))
 
-            // Kolom Kanan: Seluruh konten pesan (Menggunakan 100% lebar yang tersisa)
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Baris 1: Judul Pengirim & Waktu
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -857,7 +881,6 @@ private fun CalmSmsCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Baris 2: Tag Badges (Kategori Bahaya/Promo/OTP + MMS + Indikator Baru)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -909,7 +932,6 @@ private fun CalmSmsCard(
                     }
                 }
 
-                // Baris 3: Banner Ancaman Khusus (Jika terdeteksi bahaya)
                 if (isThreat && message.threatDetail != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
@@ -942,7 +964,6 @@ private fun CalmSmsCard(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Baris 4: Cuplikan Isi Pesan
                 Text(
                     text = message.body,
                     color = if (!message.isRead) TextPrimary else TextSecondary,
@@ -954,7 +975,6 @@ private fun CalmSmsCard(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Baris 5: Panduan & Tombol Salin
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -999,5 +1019,140 @@ private fun CalmSmsCard(
             }
         }
     }
+}
+
+@Composable
+private fun ComposeSmsDialog(
+    onDismiss: () -> Unit,
+    onSend: (recipient: String, message: String) -> Unit
+) {
+    val strings = LocalAppStrings.current
+    var recipient by remember { mutableStateOf("") }
+    var messageText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryBlue.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Text(
+                    text = strings.inboxComposeSmsTitle,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary,
+                    fontSize = 17.sp
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                OutlinedTextField(
+                    value = recipient,
+                    onValueChange = { recipient = it },
+                    placeholder = {
+                        Text(
+                            strings.inboxComposeRecipientPlaceholder,
+                            color = TextMuted,
+                            fontSize = 13.sp
+                        )
+                    },
+                    label = { Text(strings.inboxComposeRecipientLabel, fontSize = 12.sp) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = DarkBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedLabelColor = PrimaryBlue,
+                        unfocusedLabelColor = TextSecondary,
+                        cursorColor = PrimaryBlue
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = messageText,
+                    onValueChange = { messageText = it },
+                    placeholder = {
+                        Text(
+                            strings.inboxComposeMessagePlaceholder,
+                            color = TextMuted,
+                            fontSize = 13.sp
+                        )
+                    },
+                    label = { Text(strings.inboxComposeMessageLabel, fontSize = 12.sp) },
+                    minLines = 3,
+                    maxLines = 5,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = DarkBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedLabelColor = PrimaryBlue,
+                        unfocusedLabelColor = TextSecondary,
+                        cursorColor = PrimaryBlue
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val cleanRecipient = recipient.trim()
+                    val cleanMsg = messageText.trim()
+                    if (cleanRecipient.isNotEmpty() && cleanMsg.isNotEmpty()) {
+                        onSend(cleanRecipient, cleanMsg)
+                        onDismiss()
+                    }
+                },
+                enabled = recipient.trim().isNotEmpty() && messageText.trim().isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryBlue,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(strings.inboxComposeSendBtn, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(strings.cancel, color = TextSecondary, fontSize = 13.sp)
+            }
+        },
+        containerColor = DarkSurfaceElevated,
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 

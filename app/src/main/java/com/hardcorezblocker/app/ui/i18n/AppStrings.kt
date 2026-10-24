@@ -6,7 +6,7 @@ import com.hardcorezblocker.app.data.model.RuleType
 import com.hardcorezblocker.app.data.model.TargetChannel
 
 interface Strings {
-    // Common / Global
+
     val appName: String
     val appSubtitle: String
     val active: String
@@ -28,17 +28,14 @@ interface Strings {
     val getStarted: String
     val stepOf: (Int, Int) -> String
 
-    // Navigation Tabs
     val tabDashboard: String
     val tabInbox: String
     val tabRules: String
     val tabLogs: String
     val tabSettings: String
 
-    // Splash Screen
     val splashSubtitle: String
 
-    // Onboarding
     val onbStep1Title: String
     val onbStep1Subtitle: String
     val onbFeat1Title: String
@@ -66,7 +63,6 @@ interface Strings {
     val onbPermSmsTitle: String
     val onbPermSmsDesc: String
 
-    // Dashboard
     val dashHeaderSubtitle: String
     val dashProtectionActive: String
     val dashProtectionInactive: String
@@ -103,7 +99,6 @@ interface Strings {
     val dashCallBlockedTag: String
     val dashSmsBlockedTag: String
 
-    // Inbox
     val inboxTitle: String
     val inboxFilterAll: String
     val inboxFilterPhishing: String
@@ -130,8 +125,13 @@ interface Strings {
     val inboxThreatBannerDesc: String
     val inboxThreatBannerBtn: String
     val inboxUnreadBadge: String
+    val inboxComposeSmsTitle: String
+    val inboxComposeRecipientLabel: String
+    val inboxComposeRecipientPlaceholder: String
+    val inboxComposeMessageLabel: String
+    val inboxComposeMessagePlaceholder: String
+    val inboxComposeSendBtn: String
 
-    // Rules
     val rulesTitle: String
     val rulesSubtitle: String
     val rulesSubtitleFormatted: (Int) -> String
@@ -164,7 +164,6 @@ interface Strings {
     val rulesDeleteConfirmTitle: String
     val rulesDeleteConfirmMsg: (String) -> String
 
-    // Rule Types & Channel display
     val ruleTypeExact: String
     val ruleTypePrefix: String
     val ruleTypeContains: String
@@ -174,7 +173,6 @@ interface Strings {
     val channelCallOnly: String
     val channelSmsOnly: String
 
-    // Logs
     val logsTitle: String
     val logsSubtitle: String
     val logsHeaderSubtitle: (Int) -> String
@@ -206,7 +204,6 @@ interface Strings {
     val logsReasonPrefix: String
     val logsContentPrefix: String
 
-    // Settings
     val settingsTitle: String
     val settingsSubtitle: String
     val settingsSecTheme: String
@@ -269,7 +266,6 @@ interface Strings {
     val settingsPrivacyDesc: String
     val settingsVersion: String
 
-    // Add / Edit Rule Dialog
     val dialogAddRuleTitle: String
     val dialogEditRuleTitle: String
     val dialogTabNumberPrefix: String
@@ -287,7 +283,6 @@ interface Strings {
     val dialogSaveRuleBtn: String
     val dialogQuickPresets: String
 
-    // Simulator Bottom Sheet
     val simTitle: String
     val simSubtitle: String
     val simTabCall: String
@@ -301,7 +296,6 @@ interface Strings {
     val simInputCallPlaceholder: String
     val simInputSmsPlaceholder: String
 
-    // SMS Detail Bottom Sheet
     val smsDetailTitle: String
     val smsThreatHeader: String
     val smsPromoHeader: String
@@ -315,8 +309,12 @@ interface Strings {
     val smsDeleteBtn: String
     val smsCopyTextBtn: String
     val smsThreatWarning: String
+    val smsReplyPlaceholder: String
+    val smsSendBtn: String
+    val smsReplySentToast: String
+    val smsReplyFailedToast: String
+    val smsNonReplyableNote: String
 
-    // Backup & Restore Dialogs
     val backupSuccessTitle: String
     val backupSuccessDesc: String
     val backupCopyAgainBtn: String
@@ -329,7 +327,6 @@ interface Strings {
     val importNowBtn: String
     val importEmptyToast: String
 
-    // Notifications
     val notifCallBlockedTitle: (String) -> String
     val notifCallBlockedReason: (String) -> String
     val notifCallBlockedBigText: (String, String) -> String
@@ -337,7 +334,6 @@ interface Strings {
     val notifSmsScamReason: (String) -> String
     val notifSmsScamBigText: (String, String, String) -> String
 
-    // Toasts
     val toastRoleSuccess: String
     val toastCopiedNumber: String
     val toastCopiedText: String
@@ -468,6 +464,12 @@ object IndonesianStrings : Strings {
     override val inboxThreatBannerDesc = "Dicurigai penipuan phishing atau tautan berbahaya. Ketuk untuk menyaring hanya pesan ini."
     override val inboxThreatBannerBtn = "Lihat Pesan"
     override val inboxUnreadBadge = "Baru"
+    override val inboxComposeSmsTitle = "Tulis SMS Baru"
+    override val inboxComposeRecipientLabel = "Nomor Tujuan"
+    override val inboxComposeRecipientPlaceholder = "Nomor HP tujuan (misal: 0812...)"
+    override val inboxComposeMessageLabel = "Isi Pesan"
+    override val inboxComposeMessagePlaceholder = "Ketik pesan SMS di sini..."
+    override val inboxComposeSendBtn = "Kirim SMS"
 
     override val rulesTitle = "Aturan Pemblokiran"
     override val rulesSubtitle = "Aturan penyaring panggilan & SMS spam"
@@ -646,6 +648,11 @@ object IndonesianStrings : Strings {
     override val smsDeleteBtn = "Hapus SMS"
     override val smsCopyTextBtn = "Salin Teks Pesan"
     override val smsThreatWarning = "⚠️ Peringatan: Jangan pernah mengeklik tautan atau mengunduh file APK dari pesan yang mencurigakan!"
+    override val smsReplyPlaceholder = "Ketik balasan SMS..."
+    override val smsSendBtn = "Kirim"
+    override val smsReplySentToast = "Pesan SMS berhasil dikirim"
+    override val smsReplyFailedToast = "Gagal mengirim SMS. Pastikan pulsa / sinyal mencukupi."
+    override val smsNonReplyableNote = "Pengirim bertipe alfanumerik / bot (tidak dapat dibalas)"
 
     override val backupSuccessTitle = "Cadangan Berhasil Dibuat"
     override val backupSuccessDesc = "Data aturan telah otomatis disalin ke clipboard ponsel Anda. Anda juga dapat menyalin atau menyimpan teks JSON di bawah ini:"
@@ -796,6 +803,12 @@ object EnglishStrings : Strings {
     override val inboxThreatBannerDesc = "Suspected phishing or unsafe links. Tap to isolate and review these messages."
     override val inboxThreatBannerBtn = "View Threats"
     override val inboxUnreadBadge = "New"
+    override val inboxComposeSmsTitle = "Compose New SMS"
+    override val inboxComposeRecipientLabel = "Recipient Number"
+    override val inboxComposeRecipientPlaceholder = "Phone number (e.g. 0812...)"
+    override val inboxComposeMessageLabel = "Message Content"
+    override val inboxComposeMessagePlaceholder = "Type your SMS message here..."
+    override val inboxComposeSendBtn = "Send SMS"
 
     override val rulesTitle = "Blocking Rules"
     override val rulesSubtitle = "Custom rules filtering spam calls & SMS"
@@ -974,6 +987,11 @@ object EnglishStrings : Strings {
     override val smsDeleteBtn = "Delete SMS"
     override val smsCopyTextBtn = "Copy Message Text"
     override val smsThreatWarning = "⚠️ Warning: Never click links or download APK files from suspicious messages!"
+    override val smsReplyPlaceholder = "Type SMS reply..."
+    override val smsSendBtn = "Send"
+    override val smsReplySentToast = "SMS message sent successfully"
+    override val smsReplyFailedToast = "Failed to send SMS. Check mobile signal / credit."
+    override val smsNonReplyableNote = "Alphanumeric / bot sender (cannot be replied to)"
 
     override val backupSuccessTitle = "Backup Created Successfully"
     override val backupSuccessDesc = "Rule data has been automatically copied to your clipboard. You can also copy or save the JSON text below:"

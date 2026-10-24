@@ -47,10 +47,6 @@ enum class AppSortOrder(val label: String) {
     }
 }
 
-
-/**
- * Reusable Search Bar modern dan responsif.
- */
 @Composable
 fun AppSearchBar(
     query: String,
@@ -118,9 +114,6 @@ fun AppSearchBar(
     }
 }
 
-/**
- * Reusable Filter Button kotak serasi dengan Search Bar.
- */
 @Composable
 fun AppFilterButton(
     onClick: () -> Unit,
@@ -159,9 +152,6 @@ fun AppFilterButton(
     }
 }
 
-/**
- * Row gabungan Search Bar di kiri dan Filter Button di kanan beserta Dropdown Menu opsional.
- */
 @Composable
 fun AppSearchFilterRow(
     query: String,
@@ -213,10 +203,6 @@ fun AppSearchFilterRow(
     }
 }
 
-/**
- * Reusable Header standar untuk semua layar (Beranda, SMS, Aturan, Riwayat, Pengaturan).
- * Menjamin konsistensi posisi, tipografi, dan padding di seluruh aplikasi.
- */
 @Composable
 fun AppHeader(
     title: String,
@@ -264,9 +250,6 @@ fun AppHeader(
     }
 }
 
-/**
- * Reusable Screen Container dengan padding horizontal dan background yang seragam.
- */
 @Composable
 fun ScreenContainer(
     modifier: Modifier = Modifier,
@@ -291,9 +274,6 @@ fun ScreenContainer(
     }
 }
 
-/**
- * Reusable Empty State untuk tampilan data kosong (Kotak Masuk, Aturan, Riwayat).
- */
 @Composable
 fun AppEmptyState(
     icon: ImageVector,
@@ -344,9 +324,6 @@ fun AppEmptyState(
     }
 }
 
-/**
- * Reusable Filter Chip kapsul seragam.
- */
 @Composable
 fun AppFilterChip(
     label: String,
@@ -422,10 +399,6 @@ fun AppFilterChip(
     }
 }
 
-/**
- * Reusable Safety Badge untuk kategori SMS dan ancaman keamanan.
- * Didesain dengan maxLines = 1 agar tidak terhimpit atau teks menjadi cacat.
- */
 @Composable
 fun AppSafetyBadge(
     category: com.hardcorezblocker.app.data.model.SmsSafetyCategory,
@@ -457,5 +430,4 @@ fun AppSafetyBadge(
         )
     }
 }
-
 

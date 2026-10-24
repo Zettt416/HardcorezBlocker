@@ -12,13 +12,8 @@
 *.apk
 *.aab
 !release/*.apk
-
-# Keystore files
 *.jks
 *.keystore
-
-# Google Services
 google-services.json
-
-# Navigation safe args
 /buildSrc/build
+

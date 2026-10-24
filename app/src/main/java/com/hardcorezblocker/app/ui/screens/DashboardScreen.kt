@@ -70,7 +70,7 @@ fun DashboardScreen(
     )
 
     ScreenContainer(scrollable = true) {
-        // --- 1. TOP HEADER ---
+
         AppHeader(
             title = strings.appName,
             subtitle = strings.dashHeaderSubtitle,
@@ -82,7 +82,7 @@ fun DashboardScreen(
                 )
             },
             action = {
-                // Minimalist Status Pill
+
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = if (isShieldActive) ShieldActive.copy(alpha = 0.12f) else DarkSurfaceVariant,
@@ -113,7 +113,6 @@ fun DashboardScreen(
             }
         )
 
-        // --- 2. BANNER CALL SCREENING (HANYA MUNCUL JIKA BELUM DIIZINKAN) ---
         if (!isRoleHeld) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = WarningAmber.copy(alpha = 0.08f)),
@@ -184,7 +183,6 @@ fun DashboardScreen(
             }
         }
 
-        // --- 3. MASTER HERO CARD (KONTROL TUNGGAL & INTUITIF) ---
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -210,7 +208,7 @@ fun DashboardScreen(
                     .fillMaxWidth()
                     .padding(18.dp)
             ) {
-                // Baris Atas: Icon Shield Glowing, Judul Status, dan Master Switch
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -255,7 +253,6 @@ fun DashboardScreen(
 
                     Spacer(modifier = Modifier.width(10.dp))
 
-                    // Master Toggle Switch
                     Switch(
                         checked = isShieldActive,
                         onCheckedChange = { active ->
@@ -282,7 +279,6 @@ fun DashboardScreen(
                 HorizontalDivider(color = if (isShieldActive) shieldColor.copy(alpha = 0.20f) else DarkBorder, thickness = 0.8.dp)
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Baris Mode Selector (Segmented Pill Tab)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -296,7 +292,6 @@ fun DashboardScreen(
                         letterSpacing = 0.8.sp
                     )
 
-                    // Active mode badge
                     if (isShieldActive) {
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -327,7 +322,6 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Segmented Control
                 Surface(
                     shape = RoundedCornerShape(14.dp),
                     color = DarkSurfaceVariant,
@@ -342,7 +336,6 @@ fun DashboardScreen(
                         val isHardcoreSelected = settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY && isShieldActive
                         val isSmartSelected = settings.mode == BlockingMode.SMART_FILTER && isShieldActive
 
-                        // Tab 1: Hardcore
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -396,7 +389,6 @@ fun DashboardScreen(
 
                         Spacer(modifier = Modifier.width(4.dp))
 
-                        // Tab 2: Smart Filter
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -452,7 +444,6 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Keterangan Mode yang Sedang Dipilih
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = (if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) ShieldActive else PrimaryBlue).copy(alpha = 0.08f),
@@ -490,7 +481,6 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- 4. BENTO STATISTIK INTERAKTIF (KLIK LANGSUNG MENUJU TAB TERKAIT) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -529,7 +519,6 @@ fun DashboardScreen(
             )
         }
 
-        // --- 5. AKTIVITAS TERBARU (LIVE FEED / SECURITY INSIGHT) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -625,7 +614,6 @@ fun DashboardScreen(
             }
         }
 
-        // --- 6. AKSI CEPAT (SHORTCUTS) ---
         Text(
             text = strings.dashQuickActions.uppercase(Locale.ROOT),
             color = TextSecondary,

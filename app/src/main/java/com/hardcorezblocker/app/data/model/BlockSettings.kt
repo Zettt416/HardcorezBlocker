@@ -25,4 +25,3 @@ data class BlockSettings(
     val language: AppLanguage = AppLanguage.INDONESIAN
 )
 
-

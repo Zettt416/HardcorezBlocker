@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,7 +41,8 @@ fun SmsDetailBottomSheet(
     onDismiss: () -> Unit,
     onBlockSender: (String) -> Unit,
     onDelete: (Long) -> Unit,
-    onCopy: (String) -> Unit
+    onCopy: (String) -> Unit,
+    onSendReply: ((recipient: String, text: String) -> Unit)? = null
 ) {
     val strings = LocalAppStrings.current
     val context = LocalContext.current
@@ -50,13 +52,11 @@ fun SmsDetailBottomSheet(
         dateFormat.format(Date(message.timestamp))
     }
 
-    // Ekstraksi Link / URL berbahaya
     val extractedUrls = remember(message.body) {
         val urlRegex = "(https?://[^\\s]+|bit\\.ly/[^\\s]+|t\\.me/[^\\s]+|wa\\.me/[^\\s]+)".toRegex(RegexOption.IGNORE_CASE)
         urlRegex.findAll(message.body).map { it.value.trimEnd('.', ',', ')', ';') }.toList()
     }
 
-    // Ekstraksi Kode OTP akurat jika kategori pesan adalah OTP resmi
     val extractedOtp = remember(message.body, message.category) {
         if (message.category == SmsSafetyCategory.OTP_OFFICIAL) {
             com.hardcorezblocker.app.data.repository.BlockRepository.OtpDetector.extractOtp(message.body)
@@ -64,6 +64,12 @@ fun SmsDetailBottomSheet(
             null
         }
     }
+
+    val isReplyable = remember(message.sender) {
+        message.sender.any { it.isDigit() } && message.sender.replace("[^0-9+]".toRegex(), "").length >= 3
+    }
+    var replyText by remember { mutableStateOf("") }
+    var isSending by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -86,7 +92,7 @@ fun SmsDetailBottomSheet(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. HEADER DETAIL PENGIRIM
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -173,7 +179,6 @@ fun SmsDetailBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. CALLOUT ANALISIS KEAMANAN (JIKA PHISHING)
             if (isThreat) {
                 Surface(
                     color = DangerRed.copy(alpha = 0.1f),
@@ -212,7 +217,6 @@ fun SmsDetailBottomSheet(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // 3. ISOLASI LINK PHISHING (JIKA ADA URL)
             if (extractedUrls.isNotEmpty()) {
                 Surface(
                     color = WarningAmber.copy(alpha = 0.08f),
@@ -281,7 +285,6 @@ fun SmsDetailBottomSheet(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // 4. KOTAK CEPAT OTP (JIKA TERDETEKSI KODE OTP)
             if (extractedOtp != null) {
                 Surface(
                     color = PrimaryBlue.copy(alpha = 0.1f),
@@ -331,7 +334,6 @@ fun SmsDetailBottomSheet(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // 5. ISI PESAN LENGKAP
             Text(
                 text = "${strings.sms}:",
                 color = TextSecondary,
@@ -356,9 +358,85 @@ fun SmsDetailBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // 6. TOMBOL AKSI UTAMA
+            if (onSendReply != null) {
+                if (isReplyable) {
+                    Surface(
+                        color = DarkSurfaceVariant,
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = replyText,
+                                onValueChange = { replyText = it },
+                                placeholder = {
+                                    Text(
+                                        strings.smsReplyPlaceholder,
+                                        fontSize = 12.sp,
+                                        color = TextMuted
+                                    )
+                                },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.Transparent,
+                                    unfocusedBorderColor = Color.Transparent,
+                                    focusedTextColor = TextPrimary,
+                                    unfocusedTextColor = TextPrimary,
+                                    cursorColor = PrimaryBlue
+                                ),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .heightIn(min = 40.dp, max = 100.dp),
+                                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
+                                maxLines = 3
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            IconButton(
+                                onClick = {
+                                    val trimmed = replyText.trim()
+                                    if (trimmed.isNotEmpty() && !isSending) {
+                                        isSending = true
+                                        onSendReply(message.sender, trimmed)
+                                        replyText = ""
+                                        isSending = false
+                                    }
+                                },
+                                enabled = replyText.isNotBlank() && !isSending,
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(if (replyText.isNotBlank() && !isSending) PrimaryBlue else DarkSurfaceElevated)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = strings.smsSendBtn,
+                                    tint = if (replyText.isNotBlank() && !isSending) Color.White else TextMuted,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Text(
+                        text = strings.smsNonReplyableNote,
+                        color = TextMuted,
+                        fontSize = 11.sp,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        modifier = Modifier.padding(start = 2.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+            } else {
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
             Button(
                 onClick = { onBlockSender(message.sender) },
                 colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
@@ -384,7 +462,6 @@ fun SmsDetailBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Row Aksi Sekunder: Salin Teks Penuh & Hapus SMS
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

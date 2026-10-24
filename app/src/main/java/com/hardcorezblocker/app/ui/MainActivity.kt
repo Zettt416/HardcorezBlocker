@@ -55,7 +55,6 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    // Activity result launcher untuk meminta izin Call Screening Role (Android 10+)
     private val callScreeningRoleLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -66,14 +65,12 @@ class MainActivity : ComponentActivity() {
         viewModel.checkCallScreeningRole()
     }
 
-    // Activity result launcher untuk Default SMS App Role (untuk hapus SMS)
     private val smsRoleLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { _ ->
         viewModel.checkDefaultSmsRole()
     }
 
-    // Permission launcher untuk izin runtime Android
     private val permissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
@@ -85,7 +82,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Jika onboarding sudah selesai sebelumnya, cek/minta izin esensial
         if (viewModel.isOnboardingCompleted.value) {
             requestAppPermissions()
         }
@@ -228,7 +224,6 @@ fun MainAppScreen(
     val unreadThreatCount = unreadThreats.size
     val blockedCount = logs.size
 
-    // Tangani perpindahan tab jika dibuka dari notifikasi ancaman
     LaunchedEffect(Unit) {
         val intent = (context as? android.app.Activity)?.intent
         if (intent?.getBooleanExtra("FILTER_THREATS", false) == true) {
@@ -236,7 +231,6 @@ fun MainAppScreen(
         }
     }
 
-    // Sinkronkan notifikasi sistem dan lencana icon launcher di home screen
     LaunchedEffect(unreadThreats, settings.sendNotificationOnBlock, settings.notifyThreatSms) {
         if (settings.sendNotificationOnBlock && settings.notifyThreatSms) {
             com.hardcorezblocker.app.HardcorezBlockerApp.syncThreatNotification(context, unreadThreats)
@@ -370,6 +364,15 @@ fun MainAppScreen(
                                 strings.toastRuleAdded,
                                 Toast.LENGTH_SHORT
                             ).show()
+                        },
+                        onSendReply = { recipient, text ->
+                            viewModel.sendSmsReply(recipient, text) { success ->
+                                Toast.makeText(
+                                    viewModel.getApplication(),
+                                    if (success) strings.smsReplySentToast else strings.smsReplyFailedToast,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     )
                 }

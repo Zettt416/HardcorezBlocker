@@ -10,10 +10,8 @@ class HardcorezBlockerApp : Application() {
 
     companion object {
         const val CHANNEL_BLOCKED_ID = "channel_blocked_events"
+        const val CHANNEL_MESSAGES_ID = "channel_sms_messages"
 
-        /**
-         * Terapkan lencana (badge angka) khusus Xiaomi MIUI & HyperOS pada object Notification
-         */
         fun applyMiuiBadge(notification: android.app.Notification, count: Int) {
             try {
                 val field = notification.javaClass.getDeclaredField("extraNotification")
@@ -23,7 +21,6 @@ class HardcorezBlockerApp : Application() {
                 method.isAccessible = true
                 method.invoke(extraNotification, if (count < 0) 0 else count)
             } catch (_: Throwable) {
-                // Abaikan jika bukan perangkat MIUI/HyperOS
             }
         }
 
@@ -31,7 +28,6 @@ class HardcorezBlockerApp : Application() {
             val badgeCount = if (count < 0) 0 else count
             val componentName = "${context.packageName}/com.hardcorezblocker.app.ui.MainActivity"
 
-            // 1. Broadcast Intent untuk MIUI / POCO Launcher
             try {
                 val miuiIntent = android.content.Intent("android.intent.action.APPLICATION_MESSAGE_UPDATE").apply {
                     putExtra("android.intent.extra.update_application_component_name", componentName)
@@ -42,7 +38,6 @@ class HardcorezBlockerApp : Application() {
             } catch (_: Throwable) {
             }
 
-            // 2. ContentProvider call khusus HyperOS / MIUI
             try {
                 val bundle = android.os.Bundle().apply {
                     putString("package", context.packageName)
@@ -161,15 +156,28 @@ class HardcorezBlockerApp : Application() {
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Aktivitas Pemblokiran"
-            val descriptionText = "Notifikasi saat ada panggilan atau SMS penipuan yang berhasil digagalkan"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_BLOCKED_ID, name, importance).apply {
-                description = descriptionText
+            val blockedChannel = NotificationChannel(
+                CHANNEL_BLOCKED_ID,
+                "Aktivitas Pemblokiran",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notifikasi saat ada panggilan atau SMS penipuan yang berhasil digagalkan"
                 setShowBadge(true)
             }
+
+            val messagesChannel = NotificationChannel(
+                CHANNEL_MESSAGES_ID,
+                "Pesan SMS Masuk",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifikasi pesan SMS yang diterima perangkat"
+                setShowBadge(true)
+                enableVibration(true)
+            }
+
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(blockedChannel)
+            notificationManager.createNotificationChannel(messagesChannel)
         }
     }
 }
