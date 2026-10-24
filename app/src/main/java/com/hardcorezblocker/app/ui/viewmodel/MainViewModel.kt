@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.viewmodel
+package com.hardcorezblocker.app.ui.viewmodel
 
 import android.app.Application
 import android.app.role.RoleManager
@@ -159,5 +159,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun triggerTutorial() {
         _isOnboardingCompleted.value = false
+    }
+
+    fun isSplashShown(): Boolean = repository.isSplashShown()
+
+    fun markSplashShown() {
+        repository.setSplashShown(true)
     }
 }

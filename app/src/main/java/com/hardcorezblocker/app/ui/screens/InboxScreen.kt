@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.screens
+package com.hardcorezblocker.app.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -684,6 +684,22 @@ private fun CalmSmsCard(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             AppSafetyBadge(category = message.category)
+                            if (message.isMms) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = PromoPurple.copy(alpha = 0.15f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, PromoPurple.copy(alpha = 0.4f))
+                                ) {
+                                    Text(
+                                        text = "MMS",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PromoPurple,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.data.model
+package com.hardcorezblocker.app.data.model
 
 enum class SmsSafetyCategory {
     ALL,
@@ -15,6 +15,7 @@ data class SmsMessageItem(
     val body: String,
     val timestamp: Long,
     val category: SmsSafetyCategory,
-    val threatDetail: String? = null
+    val threatDetail: String? = null,
+    val isMms: Boolean = false
 )
 

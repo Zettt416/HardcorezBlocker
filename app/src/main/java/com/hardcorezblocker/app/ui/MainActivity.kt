@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui
+package com.hardcorezblocker.app.ui
 
 import android.Manifest
 import android.app.role.RoleManager
@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by viewModel.settings.collectAsState()
             val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsState()
-            var isSplashActive by remember { mutableStateOf(true) }
+            var isSplashActive by remember { mutableStateOf(!viewModel.isSplashShown()) }
 
             HardcorezBlockerTheme(
                 themeMode = settings.themeMode,
@@ -104,7 +104,10 @@ class MainActivity : ComponentActivity() {
             ) {
                 if (isSplashActive) {
                     SplashScreen(
-                        onTimeout = { isSplashActive = false }
+                        onTimeout = {
+                            viewModel.markSplashShown()
+                            isSplashActive = false
+                        }
                     )
                 } else if (!isOnboardingCompleted) {
                     OnboardingScreen(
@@ -216,6 +219,18 @@ fun MainAppScreen(
         }
     }
 
+    val inboxMessages by viewModel.inboxMessages.collectAsState()
+    val logs by viewModel.logs.collectAsState()
+    val threatCount = remember(inboxMessages) {
+        inboxMessages.count { it.category == SmsSafetyCategory.SPAM_OR_PHISHING }
+    }
+    val blockedCount = logs.size
+
+    // Sinkronkan badge launcher icon di home screen (khususnya Xiaomi MIUI/HyperOS)
+    LaunchedEffect(threatCount) {
+        com.hardcorezblocker.app.HardcorezBlockerApp.updateLauncherBadge(context, threatCount)
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = DarkBackground,
@@ -232,11 +247,47 @@ fun MainAppScreen(
                         selected = isSelected,
                         onClick = { selectedTab = tab },
                         icon = {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tabTitle,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            BadgedBox(
+                                badge = {
+                                    when (tab) {
+                                        NavigationTab.INBOX -> {
+                                            if (threatCount > 0) {
+                                                Badge(
+                                                    containerColor = DangerRed,
+                                                    contentColor = androidx.compose.ui.graphics.Color.White
+                                                ) {
+                                                    Text(
+                                                        text = if (threatCount > 99) "99+" else "$threatCount",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        NavigationTab.LOGS -> {
+                                            if (blockedCount > 0) {
+                                                Badge(
+                                                    containerColor = PrimaryBlue,
+                                                    contentColor = androidx.compose.ui.graphics.Color.White
+                                                ) {
+                                                    Text(
+                                                        text = if (blockedCount > 99) "99+" else "$blockedCount",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        else -> Unit
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = tabTitle,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         },
                         label = {
                             Text(

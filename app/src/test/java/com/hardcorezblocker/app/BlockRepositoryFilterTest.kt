@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app
+package com.hardcorezblocker.app
 
 import com.hardcorezblocker.app.data.model.SmsSafetyCategory
 import com.hardcorezblocker.app.data.repository.BlockRepository
@@ -115,5 +115,19 @@ class BlockRepositoryFilterTest {
 
         val poinBody = "Anda mendapatkan 200 poin Telkomsel dari transaksi isi ulang."
         assertFalse(BlockRepository.OtpDetector.isOtp(poinBody))
+    }
+
+    @Test
+    fun testMmsPromoAndThreatClassification() {
+        // MMS Promo resmi dari bank/merchant
+        val rbmPromo = "Ajukan Kartu Kredit Mega. Apply Kartu Kredit Bank Mega sekarang dan kamu bisa dapatkan limit hingga Rp100JT."
+        val (cat1, _) = BlockRepository.classifySafetyCategory("Bank Mega", rbmPromo)
+        assertEquals(SmsSafetyCategory.PROMO_MARKETING, cat1)
+
+        // MMS Phishing / Malware APK bertopeng instansi resmi
+        val mmsPhishing = "Surat Tilang Elektronik ETLE. Silakan unduh dokumen_tilang.apk untuk melihat rincian denda."
+        val (cat2, reason2) = BlockRepository.classifySafetyCategory("Polri ETLE", mmsPhishing)
+        assertEquals(SmsSafetyCategory.SPAM_OR_PHISHING, cat2)
+        assertNotNull(reason2)
     }
 }

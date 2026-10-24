@@ -430,6 +430,14 @@ class BlockRepository private constructor(context: Context) {
         prefs.edit().putBoolean("onboarding_completed", completed).apply()
     }
 
+    fun isSplashShown(): Boolean {
+        return prefs.getBoolean("splash_shown", prefs.getBoolean("onboarding_completed", false))
+    }
+
+    fun setSplashShown(shown: Boolean) {
+        prefs.edit().putBoolean("splash_shown", shown).apply()
+    }
+
     // --- Rules CRUD ---
 
     fun refreshRules() {
@@ -722,11 +730,14 @@ class BlockRepository private constructor(context: Context) {
 
     // --- PEMBACA KOTAK MASUK (INBOX SMS) & SCANNER ---
 
+    // --- PEMBACA KOTAK MASUK (INBOX SMS & MMS) & SCANNER ---
+
     fun readInboxSms(context: Context): List<com.hardcorezblocker.app.data.model.SmsMessageItem> {
         val messages = mutableListOf<com.hardcorezblocker.app.data.model.SmsMessageItem>()
         val uri = Uri.parse("content://sms/inbox")
         val projection = arrayOf("_id", "address", "body", "date")
 
+        // 1. Baca SMS Teks Biasa
         try {
             val cursor = context.contentResolver.query(uri, projection, null, null, "date DESC")
             cursor?.use {
@@ -760,34 +771,221 @@ class BlockRepository private constructor(context: Context) {
                             body = body,
                             timestamp = timestamp,
                             category = category,
-                            threatDetail = threatDetail
+                            threatDetail = threatDetail,
+                            isMms = false
                         )
                     )
 
-                    // Muat seluruh kotak masuk (maksimal 1000 pesan)
-                    if (messages.size >= 1000) break
+                    if (messages.size >= 800) break
                 }
             }
-            android.util.Log.i("HardcorezBlocker", "readInboxSms: berhasil memuat ${messages.size} pesan")
         } catch (e: Exception) {
             android.util.Log.e("HardcorezBlocker", "readInboxSms: gagal membaca inbox SMS", e)
-            e.printStackTrace()
         }
 
-        return messages
+        // 2. Baca Pesan Multimedia & RCS Bergambar (MMS)
+        val mmsMessages = readMmsMessages(context)
+        messages.addAll(mmsMessages)
+
+        // 3. Urutkan berdasarkan waktu pesan terbaru
+        val combined = messages.sortedByDescending { it.timestamp }
+        val finalResult = if (combined.size > 1000) combined.take(1000) else combined
+        android.util.Log.i("HardcorezBlocker", "readInboxSms: berhasil memuat ${finalResult.size} pesan (SMS & MMS)")
+        return finalResult
     }
 
-    // --- PENGHAPUSAN MASSAL SMS DARI KOTAK MASUK SISTEM ---
+    private fun readMmsMessages(context: Context): List<com.hardcorezblocker.app.data.model.SmsMessageItem> {
+        val mmsList = mutableListOf<com.hardcorezblocker.app.data.model.SmsMessageItem>()
+        val mmsUri = Uri.parse("content://mms")
+        val projection = arrayOf("_id", "date", "sub")
+
+        try {
+            val cursor = context.contentResolver.query(mmsUri, projection, null, null, "date DESC")
+            cursor?.use {
+                val idCol = it.getColumnIndexOrThrow("_id")
+                val dateCol = it.getColumnIndexOrThrow("date")
+                val subCol = it.getColumnIndexOrThrow("sub")
+
+                while (it.moveToNext()) {
+                    val mmsId = it.getLong(idCol)
+                    val dateSec = it.getLong(dateCol)
+                    // Timestamp MMS di Android disimpan dalam satuan detik (konversi ke ms)
+                    val timestamp = if (dateSec < 10000000000L) dateSec * 1000L else dateSec
+                    val subject = it.getString(subCol) ?: ""
+
+                    // 1. Ekstrak Pengirim dari tabel alamat MMS (type = 137 / FROM)
+                    val sender = extractMmsSender(context, mmsId)
+
+                    // 2. Ekstrak Isi Teks & Payload dari tabel part MMS
+                    val body = extractMmsBody(context, mmsId, subject)
+
+                    val cleanSender = sender.trim()
+                    val isContact = isNumberInContacts(context, cleanSender)
+                    val (isCustomThreat, customReason) = evaluateIncomingSms(context, cleanSender, body)
+
+                    val (category, threatDetail) = classifySafetyCategory(
+                        cleanSender = cleanSender,
+                        body = body,
+                        isContact = isContact,
+                        isCustomThreat = isCustomThreat,
+                        customReason = customReason
+                    )
+
+                    mmsList.add(
+                        com.hardcorezblocker.app.data.model.SmsMessageItem(
+                            id = mmsId,
+                            sender = sender,
+                            body = body,
+                            timestamp = timestamp,
+                            category = category,
+                            threatDetail = threatDetail,
+                            isMms = true
+                        )
+                    )
+
+                    if (mmsList.size >= 300) break
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HardcorezBlocker", "readMmsMessages: gagal membaca MMS", e)
+        }
+        return mmsList
+    }
+
+    private fun extractMmsSender(context: Context, mmsId: Long): String {
+        val addrUri = Uri.parse("content://mms/$mmsId/addr")
+        try {
+            val cursor = context.contentResolver.query(
+                addrUri,
+                arrayOf("address", "type"),
+                "type = 137", // 137 = PduHeaders.FROM
+                null,
+                null
+            )
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val rawAddress = it.getString(0) ?: ""
+                    if (rawAddress.isNotBlank() && !rawAddress.contains("insert-address-token", ignoreCase = true)) {
+                        // Jika pengirim berasal dari bot RBM / RCS bot (misal: bank_mega_jbzkrafs_agent@rbm.goog)
+                        if (rawAddress.contains("@rbm.", ignoreCase = true)) {
+                            val botPrefix = rawAddress.substringBefore("_agent@")
+                                .substringBefore("@")
+                                .replace(Regex("_[a-z0-9]{6,}$"), "") // hilangkan token acak
+                            val formatted = botPrefix.split("_", "-")
+                                .filter { part -> part.isNotBlank() }
+                                .joinToString(" ") { part -> part.replaceFirstChar { c -> c.uppercase() } }
+                            if (formatted.isNotBlank()) return formatted
+                        }
+                        return rawAddress
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Ignore
+        }
+        return "MMS"
+    }
+
+    private fun extractMmsBody(context: Context, mmsId: Long, subject: String): String {
+        val bodyBuilder = java.lang.StringBuilder()
+        try {
+            val partCursor = context.contentResolver.query(
+                Uri.parse("content://mms/part"),
+                arrayOf("_id", "ct", "text"),
+                "mid = ?",
+                arrayOf(mmsId.toString()),
+                null
+            )
+            partCursor?.use {
+                while (it.moveToNext()) {
+                    val partId = it.getLong(0)
+                    val ct = it.getString(1) ?: ""
+                    val directText = it.getString(2)
+
+                    if (ct.equals("text/plain", ignoreCase = true)) {
+                        if (!directText.isNullOrBlank()) {
+                            bodyBuilder.append(directText).append(" ")
+                        } else {
+                            val streamText = readStreamToString(context, Uri.parse("content://mms/part/$partId"))
+                            if (streamText.isNotBlank()) {
+                                bodyBuilder.append(streamText).append(" ")
+                            }
+                        }
+                    } else if (ct.contains("gsma.botmessage", ignoreCase = true) || ct.contains("json", ignoreCase = true)) {
+                        val jsonStr = readStreamToString(context, Uri.parse("content://mms/part/$partId"))
+                        if (jsonStr.isNotBlank()) {
+                            val parsedRbm = parseRbmBotMessage(jsonStr)
+                            if (parsedRbm.isNotBlank()) {
+                                bodyBuilder.append(parsedRbm).append(" ")
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Ignore
+        }
+
+        val result = bodyBuilder.toString().trim()
+        return when {
+            result.isNotBlank() -> result
+            subject.isNotBlank() -> subject
+            else -> "[Pesan Bergambar / MMS]"
+        }
+    }
+
+    private fun parseRbmBotMessage(jsonStr: String): String {
+        return try {
+            val json = org.json.JSONObject(jsonStr)
+            val card = json.optJSONObject("message")
+                ?.optJSONObject("generalPurposeCard")
+                ?.optJSONObject("content")
+            val title = card?.optString("title") ?: ""
+            val desc = card?.optString("description") ?: ""
+            val suggestions = card?.optJSONArray("suggestions")
+            var actionUrl = ""
+            if (suggestions != null && suggestions.length() > 0) {
+                val action = suggestions.optJSONObject(0)?.optJSONObject("action")
+                actionUrl = action?.optJSONObject("urlAction")?.optJSONObject("openUrl")?.optString("url") ?: ""
+            }
+            buildString {
+                if (title.isNotBlank()) append(title).append("\n")
+                if (desc.isNotBlank()) append(desc)
+                if (actionUrl.isNotBlank()) append("\n").append(actionUrl)
+            }
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun readStreamToString(context: Context, uri: Uri): String {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                java.io.BufferedReader(java.io.InputStreamReader(stream, java.nio.charset.StandardCharsets.UTF_8)).use { reader ->
+                    reader.readText()
+                }
+            } ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    // --- PENGHAPUSAN MASSAL SMS / MMS DARI KOTAK MASUK SISTEM ---
     fun deleteSmsBatch(context: Context, ids: List<Long>): Int {
         var count = 0
         try {
             for (id in ids) {
-                val uri = Uri.parse("content://sms/$id")
-                val deleted = context.contentResolver.delete(uri, null, null)
-                count += deleted
+                val smsUri = Uri.parse("content://sms/$id")
+                val deleted = context.contentResolver.delete(smsUri, null, null)
+                if (deleted > 0) {
+                    count += deleted
+                } else {
+                    val mmsUri = Uri.parse("content://mms/$id")
+                    count += context.contentResolver.delete(mmsUri, null, null)
+                }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Abaikan kegagalan izin atau record yang sudah terhapus
         }
         return count
     }
