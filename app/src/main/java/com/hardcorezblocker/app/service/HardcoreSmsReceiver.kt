@@ -79,7 +79,6 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
             )
         }
 
-        // Semua SMS tetap disimpan ke inbox (terlihat saat app dibuka), yang diatur hanya push-nya.
         if (action == Telephony.Sms.Intents.SMS_DELIVER_ACTION || isDefaultSmsApp) {
             repository.writeSmsToInbox(context, sender, completeMessage, timestamp)
         }

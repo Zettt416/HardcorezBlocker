@@ -4,12 +4,6 @@ import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.hardcorezblocker.app.data.repository.BlockRepository
-
-/**
- * Membatalkan notifikasi SMS spam/promo yang dimunculkan aplikasi pesan lain
- * (Google Messages, Pesan MIUI, dll) agar toggle notifikasi di app ini berlaku
- * walaupun HardcorezBlocker belum jadi aplikasi SMS utama.
- */
 class SmsNotificationFilterService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {

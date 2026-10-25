@@ -7,10 +7,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-
-/**
- * Menerima aksi langsung dari notifikasi (misal: Salin Kode OTP).
- */
 class NotificationActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
