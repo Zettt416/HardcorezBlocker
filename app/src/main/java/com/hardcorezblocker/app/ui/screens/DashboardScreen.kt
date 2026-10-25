@@ -47,6 +47,7 @@ import com.hardcorezblocker.app.ui.i18n.LocalAppStrings
 fun DashboardScreen(
     viewModel: MainViewModel,
     onRequestRole: () -> Unit,
+    onRequestSmsRole: () -> Unit,
     onNavigateToTab: (NavigationTab) -> Unit
 ) {
     val strings = LocalAppStrings.current
@@ -54,6 +55,7 @@ fun DashboardScreen(
     val rules by viewModel.rules.collectAsState()
     val logs by viewModel.logs.collectAsState()
     val isRoleHeld by viewModel.isRoleHeld.collectAsState()
+    val isDefaultSms by viewModel.isDefaultSms.collectAsState()
 
     val totalBlockedCalls = logs.count { it.channel == TargetChannel.CALL_ONLY || it.channel == TargetChannel.BOTH }
     val totalBlockedSms = logs.count { it.channel == TargetChannel.SMS_ONLY }
@@ -177,6 +179,76 @@ fun DashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(strings.dashGrantPerm, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!isDefaultSms) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = WarningAmber.copy(alpha = 0.08f)),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 14.dp)
+                    .border(1.dp, WarningAmber.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(WarningAmber.copy(alpha = 0.18f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChatBubbleOutline,
+                                contentDescription = null,
+                                tint = WarningAmber,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = strings.dashDefaultSmsAlertTitle,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = strings.dashDefaultSmsAlertDesc,
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = onRequestSmsRole,
+                        colors = ButtonDefaults.buttonColors(containerColor = WarningAmber, contentColor = Color.White),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(38.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(strings.dashGrantDefaultSms, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                 }

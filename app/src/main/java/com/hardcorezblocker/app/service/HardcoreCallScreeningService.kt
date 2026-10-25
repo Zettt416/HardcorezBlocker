@@ -88,21 +88,26 @@ class HardcoreCallScreeningService : CallScreeningService() {
     }
 
     private fun sendBlockedNotification(number: String, reason: String, strings: Strings) {
+        val notifId = (System.currentTimeMillis() % 100000).toInt()
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("EXTRA_TAB", "LOGS")
         }
         val pendingIntent = PendingIntent.getActivity(
             this,
-            0,
+            notifId,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(this, HardcorezBlockerApp.CHANNEL_BLOCKED_ID)
             .setSmallIcon(R.drawable.ic_app_logo)
-            .setContentTitle(strings.notifCallBlockedTitle(number))
-            .setContentText(strings.notifCallBlockedReason(reason))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(strings.notifCallBlockedBigText(number, reason)))
+            .setContentTitle(number)
+            .setContentText("🛡️ Panggilan Diblokir: $reason")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText("🛡️ Panggilan Masuk Diblokir\nNomor: $number\nAlasan: $reason")
+            )
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
@@ -114,6 +119,6 @@ class HardcoreCallScreeningService : CallScreeningService() {
         HardcorezBlockerApp.updateLauncherBadge(this, 1)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        notificationManager.notify(notifId, notification)
     }
 }

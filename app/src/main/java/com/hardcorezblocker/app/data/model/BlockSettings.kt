@@ -16,6 +16,7 @@ data class BlockSettings(
     val mode: BlockingMode = BlockingMode.HARDCORE_CONTACTS_ONLY,
     val blockForeignNumbers: Boolean = true,
     val blockSuspiciousLinksInSms: Boolean = true,
+    val blockPromoSms: Boolean = true,
     val sendNotificationOnBlock: Boolean = true,
     val notifyThreatSms: Boolean = true,
     val notifyOtpSms: Boolean = true,

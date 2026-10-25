@@ -196,12 +196,21 @@ class BlockRepository private constructor(context: Context) {
             return null
         }
 
+        private val PROMO_SENDERS = listOf(
+            "myads", "tsurvey", "t-survey", "promo", "iklan", "penawaran", "diskon", "deal", "reward", "info-tsel",
+            "guardian", "watsons", "indomaret", "alfamart", "alfagift", "klikindomaret",
+            "hypermart", "transmart", "superindo", "kredivo", "akulaku", "adakami", "easycash", "danarupiah", "pinjol",
+            "survey", "survei"
+        )
+
+        fun isPromoSender(sender: String): Boolean {
+            val lowerSender = sender.lowercase(Locale.ROOT)
+            return PROMO_SENDERS.any { lowerSender.contains(it) }
+        }
+
         fun isPromoMarketing(sender: String, body: String): Boolean {
             val lowerBody = body.lowercase(Locale.ROOT)
-            val lowerSender = sender.lowercase(Locale.ROOT)
-
-            val promoSenders = listOf("myads", "tsurvey", "promo", "iklan", "penawaran", "diskon", "deal", "reward", "info-tsel")
-            if (promoSenders.any { lowerSender.contains(it) }) return true
+            if (isPromoSender(sender)) return true
 
             val promoIndicators = listOf(
                 "poin", "point", "points", "tukar poin", "tukarpoin", "perolehan poin",
@@ -217,8 +226,9 @@ class BlockRepository private constructor(context: Context) {
                 "penawaran eksklusif", "penawaran terbatas", "khusus hari ini",
                 "apply kartu kredit", "paylater", "bunga 0%", "buka tabungan", "bonus s.d",
                 "limit s.d", "dana instan", "limit pinjaman", "cicilan ringan",
-                "myads.id", "tsel.id", "tsurvey.id", "upoint.id", "kirim stop", "ketik stop",
-                "s&k berlaku", "syarat & ketentuan", "survei", "responden", "pretzel", "karaoke"
+                "myads.id", "tsel.id", "tsurvey.id", "t-survey", "upoint.id", "kirim stop", "ketik stop",
+                "s&k berlaku", "syarat & ketentuan", "survei", "survey", "responden", "kuesioner",
+                "pretzel", "karaoke", "guardian", "skincare", "kosmetik", "kecantikan", "belanja", "katalog", "gerai"
             )
 
             return promoIndicators.any { lowerBody.contains(it) }
@@ -238,6 +248,7 @@ class BlockRepository private constructor(context: Context) {
             val category = when {
                 isThreat -> SmsSafetyCategory.SPAM_OR_PHISHING
                 isContact -> SmsSafetyCategory.SAFE_CONTACT
+                isPromoSender(cleanSender) -> SmsSafetyCategory.PROMO_MARKETING
                 OtpDetector.isOtp(body) -> SmsSafetyCategory.OTP_OFFICIAL
                 isPromoMarketing(cleanSender, body) -> SmsSafetyCategory.PROMO_MARKETING
                 else -> SmsSafetyCategory.NORMAL
@@ -358,6 +369,7 @@ class BlockRepository private constructor(context: Context) {
         }
         val blockForeign = prefs.getBoolean("block_foreign", true)
         val blockLinks = prefs.getBoolean("block_links", true)
+        val blockPromo = prefs.getBoolean("block_promo_sms", true)
         val notifyBlocked = prefs.getBoolean("notify_blocked", true)
         val notifyThreat = prefs.getBoolean("notify_threat_sms", true)
         val notifyOtp = prefs.getBoolean("notify_otp_sms", true)
@@ -381,6 +393,7 @@ class BlockRepository private constructor(context: Context) {
             mode = mode,
             blockForeignNumbers = blockForeign,
             blockSuspiciousLinksInSms = blockLinks,
+            blockPromoSms = blockPromo,
             sendNotificationOnBlock = notifyBlocked,
             notifyThreatSms = notifyThreat,
             notifyOtpSms = notifyOtp,
@@ -397,6 +410,7 @@ class BlockRepository private constructor(context: Context) {
             putString("mode", newSettings.mode.name)
             putBoolean("block_foreign", newSettings.blockForeignNumbers)
             putBoolean("block_links", newSettings.blockSuspiciousLinksInSms)
+            putBoolean("block_promo_sms", newSettings.blockPromoSms)
             putBoolean("notify_blocked", newSettings.sendNotificationOnBlock)
             putBoolean("notify_threat_sms", newSettings.notifyThreatSms)
             putBoolean("notify_otp_sms", newSettings.notifyOtpSms)
@@ -691,11 +705,17 @@ class BlockRepository private constructor(context: Context) {
             }
         }
 
-        val isEnterpriseOrShortcode = !isPersonalMobileNumber(cleanSender)
-        val isOtpMessage = OtpDetector.isOtp(body)
+        val isOtpMessage = OtpDetector.isOtp(body) && !isPromoSender(cleanSender)
+        if (isOtpMessage) {
+            return Pair(false, "Kode OTP Resmi")
+        }
 
-        if (isEnterpriseOrShortcode || isOtpMessage) {
-            return Pair(false, "Layanan Resmi / Operator Terverifikasi")
+        if (settings.blockPromoSms && isPromoMarketing(cleanSender, body)) {
+            return Pair(true, "SMS Promo / Marketing terblokir ($cleanSender)")
+        }
+
+        if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) {
+            return Pair(true, "Pengirim tidak terdaftar di kontak (Hardcore Protection)")
         }
 
         if (settings.blockSuspiciousLinksInSms && isPersonalMobileNumber(cleanSender)) {
@@ -704,7 +724,35 @@ class BlockRepository private constructor(context: Context) {
             }
         }
 
+        val isEnterpriseOrShortcode = !isPersonalMobileNumber(cleanSender)
+        if (isEnterpriseOrShortcode) {
+            return Pair(false, "Layanan Resmi / Operator Terverifikasi")
+        }
+
         return Pair(false, "Lolos filter SMS")
+    }
+
+    fun shouldSuppressMessagingNotification(context: Context, title: String, body: String): Boolean {
+        val s = loadSettings()
+        if (!s.isProtectionActive || s.mode == BlockingMode.OFF) return false
+        if (isNumberInContacts(context, title) || isContactName(context, title)) return false
+        if (OtpDetector.isOtp(body) && !isPromoSender(title)) return false
+        if (detectPhishingThreat(title, body) != null) return true
+        if (isPromoMarketing(title, body)) {
+            return s.blockPromoSms || !(s.sendNotificationOnBlock && s.notifyPromoSms)
+        }
+        return false
+    }
+
+    private fun isContactName(context: Context, name: String): Boolean {
+        return try {
+            val uri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_FILTER_URI, Uri.encode(name))
+            context.contentResolver.query(uri, arrayOf(ContactsContract.Contacts._ID), null, null, null)?.use {
+                it.moveToFirst()
+            } ?: false
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun isMessageRead(context: Context, id: Long, isMms: Boolean, systemRead: Boolean): Boolean {
@@ -779,12 +827,13 @@ class BlockRepository private constructor(context: Context) {
                     val cleanSender = sender.trim()
                     val isContact = isNumberInContacts(context, cleanSender)
                     val (isCustomThreat, customReason) = evaluateIncomingSms(context, cleanSender, body)
+                    val isPromoCustom = isCustomThreat && customReason.contains("Promo", ignoreCase = true)
 
                     val (category, threatDetail) = classifySafetyCategory(
                         cleanSender = cleanSender,
                         body = body,
                         isContact = isContact,
-                        isCustomThreat = isCustomThreat,
+                        isCustomThreat = isCustomThreat && !isPromoCustom,
                         customReason = customReason
                     )
 
@@ -841,12 +890,13 @@ class BlockRepository private constructor(context: Context) {
                     val cleanSender = sender.trim()
                     val isContact = isNumberInContacts(context, cleanSender)
                     val (isCustomThreat, customReason) = evaluateIncomingSms(context, cleanSender, body)
+                    val isPromoCustom = isCustomThreat && customReason.contains("Promo", ignoreCase = true)
 
                     val (category, threatDetail) = classifySafetyCategory(
                         cleanSender = cleanSender,
                         body = body,
                         isContact = isContact,
-                        isCustomThreat = isCustomThreat,
+                        isCustomThreat = isCustomThreat && !isPromoCustom,
                         customReason = customReason
                     )
 
@@ -1084,6 +1134,8 @@ class BlockRepository private constructor(context: Context) {
         } else {
             val (isBlocked, reason) = if (trimmed.startsWith("+") || (trimmed.all { it.isDigit() || it == '-' || it == ' ' } && trimmed.length <= 16)) {
                 evaluateIncomingSms(context, trimmed, "Halo ini adalah tes pesan SMS")
+            } else if (trimmed.length <= 25 && !trimmed.contains("\n") && (isPromoMarketing(trimmed, "") || trimmed.all { it.isLetterOrDigit() || it == ' ' || it == '-' })) {
+                evaluateIncomingSms(context, trimmed, "Promo diskon dan penawaran khusus belanja")
             } else {
                 evaluateIncomingSms(context, "081299998888", trimmed)
             }

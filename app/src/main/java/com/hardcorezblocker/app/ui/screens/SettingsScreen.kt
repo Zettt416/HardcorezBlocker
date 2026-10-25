@@ -35,6 +35,7 @@ import com.hardcorezblocker.app.ui.viewmodel.MainViewModel
 fun SettingsScreen(
     viewModel: MainViewModel,
     onRequestRole: () -> Unit,
+    onRequestSmsRole: () -> Unit,
     onRequestContactsPermission: () -> Unit,
     onRequestSmsPermission: () -> Unit
 ) {
@@ -42,6 +43,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val settings by viewModel.settings.collectAsState()
     val isRoleHeld by viewModel.isRoleHeld.collectAsState()
+    val isDefaultSms by viewModel.isDefaultSms.collectAsState()
     val rules by viewModel.rules.collectAsState()
 
     var exportedJsonPreview by remember { mutableStateOf<String?>(null) }
@@ -50,6 +52,8 @@ fun SettingsScreen(
     val hasContactsPermission = remember(context) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
     }
+    val isNotifAccess = androidx.core.app.NotificationManagerCompat
+        .getEnabledListenerPackages(context).contains(context.packageName)
     val hasSmsPermission = remember(context) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
     }
@@ -265,6 +269,29 @@ fun SettingsScreen(
                     grantedLabel = strings.settingsPermSmsGranted,
                     missingLabel = strings.settingsPermSmsMissing
                 )
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+                PermissionStatusRow(
+                    title = strings.settingsPermDefaultSms,
+                    description = strings.settingsPermDefaultSmsDesc,
+                    isGranted = isDefaultSms,
+                    onGrantClick = onRequestSmsRole,
+                    grantedLabel = strings.settingsPermRoleActive,
+                    missingLabel = strings.settingsPermRoleMissing
+                )
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+                PermissionStatusRow(
+                    title = strings.settingsPermNotifAccess,
+                    description = strings.settingsPermNotifAccessDesc,
+                    isGranted = isNotifAccess,
+                    onGrantClick = {
+                        context.startActivity(
+                            android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    },
+                    grantedLabel = strings.settingsPermRoleActive,
+                    missingLabel = strings.settingsPermRoleMissing
+                )
             }
         }
 
@@ -298,6 +325,13 @@ fun SettingsScreen(
                     description = strings.settingsSuspiciousLinksDesc,
                     isChecked = settings.blockSuspiciousLinksInSms,
                     onCheckedChange = { viewModel.setBlockSuspiciousLinks(it) }
+                )
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 10.dp))
+                SettingSwitchRow(
+                    title = strings.settingsBlockPromoTitle,
+                    description = strings.settingsBlockPromoDesc,
+                    isChecked = settings.blockPromoSms,
+                    onCheckedChange = { viewModel.setBlockPromoSms(it) }
                 )
             }
         }

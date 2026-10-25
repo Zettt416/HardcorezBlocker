@@ -54,20 +54,21 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
 
         val cleanSender = sender.replace("\\s".toRegex(), "")
         val isContact = repository.isNumberInContacts(context, cleanSender)
+        val isPromoCustom = shouldBlock && reason.contains("Promo", ignoreCase = true)
         val (category, _) = BlockRepository.classifySafetyCategory(
             cleanSender = cleanSender,
             body = completeMessage,
             isContact = isContact,
-            isCustomThreat = shouldBlock,
+            isCustomThreat = shouldBlock && !isPromoCustom,
             customReason = reason
         )
 
         val currentSettings = repository.loadSettings()
         val strings = getAppStrings(currentSettings.language)
 
-        if (shouldBlock) {
-            val snippet = if (completeMessage.length > 80) completeMessage.take(77) + "..." else completeMessage
+        val snippet = if (completeMessage.length > 80) completeMessage.take(77) + "..." else completeMessage
 
+        if (shouldBlock) {
             repository.addLog(
                 BlockedLog(
                     senderOrNumber = sender,
@@ -76,65 +77,72 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
                     contentSnippet = snippet
                 )
             )
+        }
 
-            if (currentSettings.sendNotificationOnBlock && currentSettings.notifyThreatSms) {
-                sendSmsAlertNotification(context, sender, reason, snippet, strings)
-            }
+        // Semua SMS tetap disimpan ke inbox (terlihat saat app dibuka), yang diatur hanya push-nya.
+        if (action == Telephony.Sms.Intents.SMS_DELIVER_ACTION || isDefaultSmsApp) {
+            repository.writeSmsToInbox(context, sender, completeMessage, timestamp)
+        }
 
-            if (isOrderedBroadcast) {
-                abortBroadcast()
-            }
-        } else {
-            if (action == Telephony.Sms.Intents.SMS_DELIVER_ACTION || isDefaultSmsApp) {
-                repository.writeSmsToInbox(context, sender, completeMessage, timestamp)
-            }
+        if (shouldBlock && isOrderedBroadcast) {
+            abortBroadcast()
+        }
 
-            when (category) {
-                com.hardcorezblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL -> {
-                    if (currentSettings.sendNotificationOnBlock && currentSettings.notifyOtpSms) {
-                        val otpCode = BlockRepository.OtpDetector.extractOtp(completeMessage)
-                        sendOtpNotification(context, sender, completeMessage, otpCode, strings)
-                    } else if (isDefaultSmsApp) {
-                        sendStandardIncomingSmsNotification(context, sender, completeMessage)
+        val notifyEnabled = currentSettings.sendNotificationOnBlock
+        when (category) {
+            com.hardcorezblocker.app.data.model.SmsSafetyCategory.SPAM_OR_PHISHING -> {
+                if (shouldBlock) {
+                    if (notifyEnabled && currentSettings.notifyThreatSms) {
+                        sendSmsAlertNotification(context, sender, reason, snippet, strings)
                     }
+                } else if (isDefaultSmsApp) {
+                    sendStandardIncomingSmsNotification(context, sender, completeMessage)
                 }
-                com.hardcorezblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> {
-                    if (currentSettings.sendNotificationOnBlock && currentSettings.notifyPromoSms) {
-                        sendPromoNotification(context, sender, completeMessage, strings)
-                    }
+            }
+            com.hardcorezblocker.app.data.model.SmsSafetyCategory.OTP_OFFICIAL -> {
+                if (notifyEnabled && currentSettings.notifyOtpSms) {
+                    val otpCode = BlockRepository.OtpDetector.extractOtp(completeMessage)
+                    sendOtpNotification(context, sender, completeMessage, otpCode, strings)
                 }
-                else -> {
-                    if (isDefaultSmsApp) {
-                        sendStandardIncomingSmsNotification(context, sender, completeMessage)
-                    }
+            }
+            com.hardcorezblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> {
+                if (notifyEnabled && currentSettings.notifyPromoSms) {
+                    sendPromoNotification(context, sender, completeMessage, strings)
+                }
+            }
+            else -> {
+                if (isDefaultSmsApp) {
+                    sendStandardIncomingSmsNotification(context, sender, completeMessage)
                 }
             }
         }
     }
 
     private fun sendSmsAlertNotification(context: Context, sender: String, reason: String, snippet: String, strings: Strings) {
+        val notifId = (System.currentTimeMillis() % 100000).toInt()
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("EXTRA_TAB", "INBOX")
+            putExtra("FILTER_THREATS", true)
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            notifId,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_BLOCKED_ID)
             .setSmallIcon(R.drawable.ic_app_logo)
-            .setContentTitle(strings.notifSmsScamTitle(sender))
-            .setContentText(strings.notifSmsScamReason(reason))
+            .setContentTitle(sender)
+            .setContentText("⚠️ $reason — $snippet")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText(strings.notifSmsScamBigText(sender, reason, snippet))
+                    .bigText("⚠️ SMS Diblokir ($reason)\n$snippet")
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .setNumber(1)
             .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
             .build()
 
@@ -142,50 +150,75 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
         HardcorezBlockerApp.updateLauncherBadge(context, 1)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify((System.currentTimeMillis() + 1).toInt(), notification)
+        notificationManager.notify(notifId, notification)
     }
 
     private fun sendOtpNotification(context: Context, sender: String, body: String, otpCode: String?, strings: Strings) {
+        val notifId = (System.currentTimeMillis() % 100000).toInt()
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("EXTRA_TAB", "INBOX")
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            (System.currentTimeMillis() % 10000).toInt(),
+            notifId,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = if (!otpCode.isNullOrBlank()) "🔑 Kode OTP: $otpCode ($sender)" else "🔑 Kode OTP Resmi: $sender"
-        val notification = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_BLOCKED_ID)
+        val builder = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_MESSAGES_ID)
             .setSmallIcon(R.drawable.ic_app_logo)
-            .setContentTitle(title)
+            .setContentTitle(sender)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
-            .build()
+
+        if (!otpCode.isNullOrBlank()) {
+            val copyIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+                action = NotificationActionReceiver.ACTION_COPY_OTP
+                putExtra(NotificationActionReceiver.EXTRA_OTP_CODE, otpCode)
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notifId)
+            }
+            val copyPendingIntent = PendingIntent.getBroadcast(
+                context,
+                notifId,
+                copyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val copyAction = NotificationCompat.Action.Builder(
+                android.R.drawable.ic_menu_save,
+                "Salin $otpCode",
+                copyPendingIntent
+            ).build()
+            builder.addAction(copyAction)
+        }
+
+        val notification = builder.build()
+        HardcorezBlockerApp.applyMiuiBadge(notification, 1)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify((System.currentTimeMillis() % 100000).toInt(), notification)
+        notificationManager.notify(notifId, notification)
     }
 
     private fun sendPromoNotification(context: Context, sender: String, body: String, strings: Strings) {
+        val notifId = (System.currentTimeMillis() % 100000).toInt()
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("EXTRA_TAB", "INBOX")
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            (System.currentTimeMillis() % 10000).toInt(),
+            notifId,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_BLOCKED_ID)
+        val notification = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_MESSAGES_ID)
             .setSmallIcon(R.drawable.ic_app_logo)
-            .setContentTitle("📢 Promo: $sender")
+            .setContentTitle(sender)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -195,21 +228,25 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
             .build()
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify((System.currentTimeMillis() % 100000).toInt(), notification)
+        notificationManager.notify(notifId, notification)
     }
 
     private fun sendStandardIncomingSmsNotification(context: Context, sender: String, body: String) {
+        val notifId = (System.currentTimeMillis() % 100000).toInt()
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("EXTRA_TAB", "INBOX")
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            (System.currentTimeMillis() % 10000).toInt(),
+            notifId,
             intent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_MESSAGES_ID)
+        val otpCode = BlockRepository.OtpDetector.extractOtp(body)
+
+        val builder = NotificationCompat.Builder(context, HardcorezBlockerApp.CHANNEL_MESSAGES_ID)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(sender)
             .setContentText(body)
@@ -218,12 +255,32 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
-            .build()
 
+        if (!otpCode.isNullOrBlank()) {
+            val copyIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+                action = NotificationActionReceiver.ACTION_COPY_OTP
+                putExtra(NotificationActionReceiver.EXTRA_OTP_CODE, otpCode)
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notifId)
+            }
+            val copyPendingIntent = PendingIntent.getBroadcast(
+                context,
+                notifId,
+                copyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val copyAction = NotificationCompat.Action.Builder(
+                android.R.drawable.ic_menu_save,
+                "Salin $otpCode",
+                copyPendingIntent
+            ).build()
+            builder.addAction(copyAction)
+        }
+
+        val notification = builder.build()
         HardcorezBlockerApp.applyMiuiBadge(notification, 1)
         HardcorezBlockerApp.updateLauncherBadge(context, 1)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify((System.currentTimeMillis() % 100000).toInt(), notification)
+        notificationManager.notify(notifId, notification)
     }
 }

@@ -218,6 +218,9 @@ fun MainAppScreen(
     val settings by viewModel.settings.collectAsState()
     val inboxMessages by viewModel.inboxMessages.collectAsState()
     val logs by viewModel.logs.collectAsState()
+    val unreadTotalCount = remember(inboxMessages) {
+        inboxMessages.count { !it.isRead }
+    }
     val unreadThreats = remember(inboxMessages) {
         inboxMessages.filter { it.category == SmsSafetyCategory.SPAM_OR_PHISHING && !it.isRead }
     }
@@ -231,13 +234,13 @@ fun MainAppScreen(
         }
     }
 
-    LaunchedEffect(unreadThreats, settings.sendNotificationOnBlock, settings.notifyThreatSms) {
-        if (settings.sendNotificationOnBlock && settings.notifyThreatSms) {
+    LaunchedEffect(unreadThreats, unreadTotalCount, settings.sendNotificationOnBlock, settings.notifyThreatSms) {
+        if (settings.sendNotificationOnBlock && settings.notifyThreatSms && unreadThreats.isNotEmpty()) {
             com.hardcorezblocker.app.HardcorezBlockerApp.syncThreatNotification(context, unreadThreats)
         } else {
             val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
             notificationManager.cancel(com.hardcorezblocker.app.HardcorezBlockerApp.THREAT_NOTIFICATION_ID)
-            com.hardcorezblocker.app.HardcorezBlockerApp.updateLauncherBadge(context, 0)
+            com.hardcorezblocker.app.HardcorezBlockerApp.updateLauncherBadge(context, unreadTotalCount)
         }
     }
 
@@ -261,13 +264,13 @@ fun MainAppScreen(
                                 badge = {
                                     when (tab) {
                                         NavigationTab.INBOX -> {
-                                            if (unreadThreatCount > 0) {
+                                            if (unreadTotalCount > 0) {
                                                 Badge(
                                                     containerColor = DangerRed,
                                                     contentColor = androidx.compose.ui.graphics.Color.White
                                                 ) {
                                                     Text(
-                                                        text = if (unreadThreatCount > 99) "99+" else "$unreadThreatCount",
+                                                        text = if (unreadTotalCount > 99) "99+" else "$unreadTotalCount",
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.Bold
                                                     )
@@ -328,6 +331,7 @@ fun MainAppScreen(
                 NavigationTab.DASHBOARD -> DashboardScreen(
                     viewModel = viewModel,
                     onRequestRole = onRequestRole,
+                    onRequestSmsRole = onRequestSmsRole,
                     onNavigateToTab = { selectedTab = it }
                 )
                 NavigationTab.INBOX -> {
@@ -385,6 +389,7 @@ fun MainAppScreen(
                 NavigationTab.SETTINGS -> SettingsScreen(
                     viewModel = viewModel,
                     onRequestRole = onRequestRole,
+                    onRequestSmsRole = onRequestSmsRole,
                     onRequestContactsPermission = onRequestContactsPermission,
                     onRequestSmsPermission = onRequestSmsPermission
                 )

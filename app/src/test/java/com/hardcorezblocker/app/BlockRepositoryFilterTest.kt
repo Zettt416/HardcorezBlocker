@@ -129,4 +129,28 @@ class BlockRepositoryFilterTest {
         assertEquals(SmsSafetyCategory.PROMO_MARKETING, cat)
         assertNull(reason)
     }
+
+    @Test
+    fun testPromoSenderWithOtpLikeBodyStillPromo() {
+        val body = "Kode voucher Anda: 482910. Tukarkan di gerai Guardian."
+        val (cat1, _) = BlockRepository.classifySafetyCategory("guardian ID", body)
+        assertEquals(SmsSafetyCategory.PROMO_MARKETING, cat1)
+        val (cat2, _) = BlockRepository.classifySafetyCategory("tsurvey", "Kode survei: 123456")
+        assertEquals(SmsSafetyCategory.PROMO_MARKETING, cat2)
+        assertTrue(BlockRepository.isPromoSender("Guardian ID"))
+        assertFalse(BlockRepository.isPromoSender("BCA"))
+    }
+
+    @Test
+    fun testGuardianClassification() {
+        val guardianMsg = "Dapatkan diskon hemat produk kecantikan di gerai Guardian terdekat!"
+        val (cat, reason) = BlockRepository.classifySafetyCategory("guardian ID", guardianMsg)
+        assertEquals("Guardian ID harus diklasifikasikan sebagai PROMO_MARKETING", SmsSafetyCategory.PROMO_MARKETING, cat)
+        assertNull(reason)
+
+        assertTrue(BlockRepository.isPromoMarketing("guardian ID", guardianMsg))
+        assertTrue(BlockRepository.isPromoMarketing("GUARDIAN", "Promo skincare weekend"))
+        assertTrue(BlockRepository.isPromoMarketing("tsurvey", "Yuk isi kuesioner singkat"))
+        assertTrue(BlockRepository.isPromoMarketing("Watsons", "Dapatkan cashback belanja"))
+    }
 }

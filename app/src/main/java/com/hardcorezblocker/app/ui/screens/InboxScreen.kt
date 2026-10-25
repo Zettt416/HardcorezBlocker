@@ -106,6 +106,13 @@ fun InboxScreen(
     val infoCount = infoMessages.size
     val contactCount = contactMessages.size
 
+    val unreadAllCount = remember(messages) { messages.count { !it.isRead } }
+    val unreadThreatCount = remember(threatMessages) { threatMessages.count { !it.isRead } }
+    val unreadPromoCount = remember(promoMessages) { promoMessages.count { !it.isRead } }
+    val unreadOtpCount = remember(otpMessages) { otpMessages.count { !it.isRead } }
+    val unreadInfoCount = remember(infoMessages) { infoMessages.count { !it.isRead } }
+    val unreadContactCount = remember(contactMessages) { contactMessages.count { !it.isRead } }
+
     val filteredMessages = remember(messages, selectedFilter, searchQuery, sortOrder) {
         val categoryFiltered = when (selectedFilter) {
             InboxFilter.ALL -> messages
@@ -145,7 +152,7 @@ fun InboxScreen(
         ScreenContainer {
         AppHeader(
             title = strings.inboxTitle,
-            subtitle = "${messages.size} ${if (strings.tabDashboard == "Dashboard") "SMS read on device" else "total SMS terbaca di ponsel"}",
+            subtitle = "${messages.size} ${if (strings.tabDashboard == "Dashboard") "SMS on device" else "total SMS terbaca di ponsel"}${if (unreadAllCount > 0) " • $unreadAllCount ${strings.inboxUnreadBadge.lowercase()}" else ""}",
             action = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(
@@ -371,6 +378,7 @@ fun InboxScreen(
                 AppFilterChip(
                     label = strings.inboxFilterAll,
                     count = messages.size,
+                    unreadCount = unreadAllCount,
                     isSelected = selectedFilter == InboxFilter.ALL,
                     accentColor = PrimaryBlue,
                     onClick = {
@@ -383,6 +391,7 @@ fun InboxScreen(
                 AppFilterChip(
                     label = strings.inboxFilterPhishing,
                     count = threatCount,
+                    unreadCount = unreadThreatCount,
                     isSelected = selectedFilter == InboxFilter.THREATS_ONLY,
                     accentColor = DangerRed,
                     hasAlert = threatCount > 0,
@@ -396,6 +405,7 @@ fun InboxScreen(
                 AppFilterChip(
                     label = strings.inboxFilterPromo,
                     count = promoCount,
+                    unreadCount = unreadPromoCount,
                     isSelected = selectedFilter == InboxFilter.PROMO_ONLY,
                     accentColor = WarningAmber,
                     onClick = {
@@ -408,6 +418,7 @@ fun InboxScreen(
                 AppFilterChip(
                     label = strings.inboxFilterOtp,
                     count = otpCount,
+                    unreadCount = unreadOtpCount,
                     isSelected = selectedFilter == InboxFilter.OTP_ONLY,
                     accentColor = PrimaryBlue,
                     onClick = {
@@ -420,6 +431,7 @@ fun InboxScreen(
                 AppFilterChip(
                     label = strings.inboxFilterInfo,
                     count = infoCount,
+                    unreadCount = unreadInfoCount,
                     isSelected = selectedFilter == InboxFilter.INFO_ONLY,
                     accentColor = TextSecondary,
                     onClick = {
@@ -432,6 +444,7 @@ fun InboxScreen(
                 AppFilterChip(
                     label = strings.inboxFilterContacts,
                     count = contactCount,
+                    unreadCount = unreadContactCount,
                     isSelected = selectedFilter == InboxFilter.CONTACTS_ONLY,
                     accentColor = ShieldActive,
                     onClick = {

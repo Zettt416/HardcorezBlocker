@@ -73,6 +73,9 @@ interface Strings {
     val dashPermAlertTitle: String
     val dashPermAlertDesc: String
     val dashGrantPerm: String
+    val dashDefaultSmsAlertTitle: String
+    val dashDefaultSmsAlertDesc: String
+    val dashGrantDefaultSms: String
     val dashModeTitle: String
     val dashModeHardcore: String
     val dashModeHardcoreTitle: String
@@ -222,6 +225,8 @@ interface Strings {
     val settingsForeignDesc: String
     val settingsSuspiciousLinksTitle: String
     val settingsSuspiciousLinksDesc: String
+    val settingsBlockPromoTitle: String
+    val settingsBlockPromoDesc: String
     val settingsNotifyTitle: String
     val settingsNotifyDesc: String
     val settingsSecNotificationControl: String
@@ -250,6 +255,10 @@ interface Strings {
     val settingsPermSms: String
     val settingsPermSmsGranted: String
     val settingsPermSmsMissing: String
+    val settingsPermDefaultSms: String
+    val settingsPermDefaultSmsDesc: String
+    val settingsPermNotifAccess: String
+    val settingsPermNotifAccessDesc: String
     val settingsSecTutorial: String
     val settingsTutorialTitle: String
     val settingsTutorialDesc: String
@@ -412,6 +421,9 @@ object IndonesianStrings : Strings {
     override val dashPermAlertTitle = "Izin Call Screening Belum Aktif"
     override val dashPermAlertDesc = "Aktifkan peran sistem agar aplikasi dapat menolak panggilan spam secara otomatis sebelum berdering."
     override val dashGrantPerm = "Aktifkan Sekarang"
+    override val dashDefaultSmsAlertTitle = "Aplikasi SMS Utama Belum Aktif"
+    override val dashDefaultSmsAlertDesc = "Jadikan HardcorezBlocker sebagai aplikasi SMS utama agar SMS promosi (tsurvey, guardian ID, dll) & penipuan dicegat langsung di tingkat sistem tanpa dimunculkan Google Messages."
+    override val dashGrantDefaultSms = "Jadikan SMS Utama"
     override val dashModeTitle = "MODE PROTEKSI AKTIF"
     override val dashModeHardcore = "Hardcore (Hanya Kontak)"
     override val dashModeHardcoreTitle = "Hardcore"
@@ -561,6 +573,8 @@ object IndonesianStrings : Strings {
     override val settingsForeignDesc = "Tolak otomatis panggilan dari kode negara luar negeri selain +62."
     override val settingsSuspiciousLinksTitle = "Deteksi Tautan Mencurigakan di SMS"
     override val settingsSuspiciousLinksDesc = "Pindai tautan phishing, file APK berbahaya, dan domain scam di pesan."
+    override val settingsBlockPromoTitle = "Blokir SMS Promosi & Marketing"
+    override val settingsBlockPromoDesc = "Otomatis memblokir SMS iklan komersial, survei, diskon, dan penawaran broadcast (tsurvey, guardian, operator, dll)."
     override val settingsNotifyTitle = "Master Notifikasi Pemblokiran"
     override val settingsNotifyDesc = "Aktifkan/nonaktifkan pengiriman notifikasi dari aplikasi ini."
     override val settingsSecNotificationControl = "PILIHAN NOTIFIKASI GRANULAR"
@@ -589,6 +603,10 @@ object IndonesianStrings : Strings {
     override val settingsPermSms = "Akses Baca SMS"
     override val settingsPermSmsGranted = "Izin Diberikan"
     override val settingsPermSmsMissing = "Perlu Izin"
+    override val settingsPermDefaultSms = "Aplikasi SMS Utama (Default SMS)"
+    override val settingsPermDefaultSmsDesc = "Wajib aktif agar Android mengizinkan pemblokiran SMS di level sistem tanpa bocor ke Google Messages."
+    override val settingsPermNotifAccess = "Akses Notifikasi (Sembunyikan Push Spam)"
+    override val settingsPermNotifAccessDesc = "Agar notifikasi SMS spam/promo dari Google Messages atau Pesan bawaan otomatis dihapus sesuai pengaturan notifikasi di sini."
     override val settingsSecTutorial = "PANDUAN & BANTUAN"
     override val settingsTutorialTitle = "Panduan & Tutorial"
     override val settingsTutorialDesc = "Pelajari kembali strategi blokir dan izin sistem"
@@ -751,6 +769,9 @@ object EnglishStrings : Strings {
     override val dashPermAlertTitle = "Call Screening Role Inactive"
     override val dashPermAlertDesc = "Grant the system role so the app can automatically drop spam calls before they ring."
     override val dashGrantPerm = "Enable Role Now"
+    override val dashDefaultSmsAlertTitle = "Default SMS App Not Set"
+    override val dashDefaultSmsAlertDesc = "Set HardcorezBlocker as default SMS app so promotional & scam SMS (tsurvey, guardian ID, etc) are intercepted at system level."
+    override val dashGrantDefaultSms = "Set Default SMS"
     override val dashModeTitle = "ACTIVE PROTECTION MODE"
     override val dashModeHardcore = "Hardcore (Contacts Only)"
     override val dashModeHardcoreTitle = "Hardcore"
@@ -900,6 +921,8 @@ object EnglishStrings : Strings {
     override val settingsForeignDesc = "Automatically reject calls with foreign country codes other than +62."
     override val settingsSuspiciousLinksTitle = "Detect Suspicious Links in SMS"
     override val settingsSuspiciousLinksDesc = "Scan for phishing links, dangerous APK files, and scam domains in messages."
+    override val settingsBlockPromoTitle = "Block Promotional & Marketing SMS"
+    override val settingsBlockPromoDesc = "Automatically block commercial ads, surveys, discounts, and broadcast promos (tsurvey, guardian, telco deals, etc)."
     override val settingsNotifyTitle = "Master Block Notifications"
     override val settingsNotifyDesc = "Enable or disable all notifications sent by this app."
     override val settingsSecNotificationControl = "GRANULAR NOTIFICATION CONTROLS"
@@ -928,6 +951,10 @@ object EnglishStrings : Strings {
     override val settingsPermSms = "SMS Read Access"
     override val settingsPermSmsGranted = "Permission Granted"
     override val settingsPermSmsMissing = "Permission Needed"
+    override val settingsPermDefaultSms = "Default SMS App Role"
+    override val settingsPermDefaultSmsDesc = "Required for Android to intercept incoming SMS at system level before Google Messages displays them."
+    override val settingsPermNotifAccess = "Notification Access (Hide Spam Push)"
+    override val settingsPermNotifAccessDesc = "Lets the app remove spam/promo SMS notifications posted by Google Messages or the stock Messages app, following your notification settings."
     override val settingsSecTutorial = "GUIDE & HELP"
     override val settingsTutorialTitle = "Guide & Tutorial"
     override val settingsTutorialDesc = "Review blocking strategies and system permissions"

@@ -131,6 +131,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         repository.updateSettings(current.copy(blockSuspiciousLinksInSms = enabled))
     }
 
+    fun setBlockPromoSms(enabled: Boolean) {
+        val current = settings.value
+        repository.updateSettings(current.copy(blockPromoSms = enabled))
+    }
+
     fun setSendNotificationOnBlock(enabled: Boolean) {
         val current = settings.value
         repository.updateSettings(current.copy(sendNotificationOnBlock = enabled))

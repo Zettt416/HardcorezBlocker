@@ -331,6 +331,7 @@ fun AppFilterChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     count: Int? = null,
+    unreadCount: Int = 0,
     accentColor: Color = PrimaryBlue,
     hasAlert: Boolean = false
 ) {
@@ -339,13 +340,15 @@ fun AppFilterChip(
         color = when {
             isSelected -> accentColor.copy(alpha = 0.22f)
             hasAlert -> DangerRed.copy(alpha = 0.10f)
+            unreadCount > 0 -> accentColor.copy(alpha = 0.10f)
             else -> DarkSurfaceElevated
         },
         border = androidx.compose.foundation.BorderStroke(
-            width = if (isSelected) 1.5.dp else if (hasAlert) 1.2.dp else 1.dp,
+            width = if (isSelected) 1.5.dp else if (hasAlert || unreadCount > 0) 1.2.dp else 1.dp,
             color = when {
                 isSelected -> accentColor
                 hasAlert -> DangerRed.copy(alpha = 0.65f)
+                unreadCount > 0 -> accentColor.copy(alpha = 0.50f)
                 else -> DarkBorder
             }
         ),
@@ -355,13 +358,23 @@ fun AppFilterChip(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 13.dp, vertical = 6.5.dp)
         ) {
+            if (unreadCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(DangerRed)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
             Text(
                 text = label,
                 fontSize = 12.5.sp,
-                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                fontWeight = if (isSelected || unreadCount > 0) FontWeight.ExtraBold else FontWeight.Medium,
                 color = when {
                     isSelected -> accentColor
                     hasAlert -> DangerRed
+                    unreadCount > 0 -> TextPrimary
                     else -> TextSecondary
                 },
                 maxLines = 1,
@@ -369,23 +382,31 @@ fun AppFilterChip(
             )
             if (count != null) {
                 Spacer(modifier = Modifier.width(6.dp))
+                val isUnreadBadge = unreadCount > 0
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
                         .background(
                             when {
+                                isUnreadBadge -> DangerRed
                                 isSelected -> accentColor.copy(alpha = 0.32f)
                                 hasAlert -> DangerRed.copy(alpha = 0.25f)
                                 else -> DarkSurfaceVariant
                             }
                         )
-                        .padding(horizontal = 7.dp, vertical = 1.5.dp)
+                        .padding(horizontal = if (isUnreadBadge) 6.dp else 7.dp, vertical = 1.5.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = count.toString(),
+                        text = if (isUnreadBadge) {
+                            if (unreadCount > 99) "99+" else "$unreadCount"
+                        } else {
+                            count.toString()
+                        },
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = when {
+                            isUnreadBadge -> Color.White
                             isSelected -> accentColor
                             hasAlert -> DangerRed
                             else -> TextSecondary
