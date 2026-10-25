@@ -68,7 +68,7 @@ class BlockRepository private constructor(context: Context) {
         private val CLEAN_NUMBER_REGEX = Regex("[^0-9+]")
 
         val OFFICIAL_OPERATOR_DOMAINS = setOf(
-            "telkomsel.com", "telkomsel.co.id", "tsel.me", "tsel.id", "myads.id", "upoint.id",
+            "telkomsel.com", "telkomsel.co.id", "tsel.me", "tsel.id", "tsurvey.id", "myads.id", "upoint.id",
             "indosat.com", "ioh.co.id", "im3.id", "tri.co.id", "bima.tri.co.id",
             "xl.co.id", "axis.co.id", "axisnet.id", "myxl.co.id",
             "smartfren.com", "byu.id", "rbm.goog"
@@ -657,13 +657,34 @@ class BlockRepository private constructor(context: Context) {
                     }
                 }
                 RuleType.EXACT -> {
-                    if (cleanNumber(cleanSender) == cleanNumber(rule.pattern)) {
+                    val sClean = cleanNumber(cleanSender)
+                    val pClean = cleanNumber(rule.pattern)
+                    val matches = if (sClean.isNotEmpty() && pClean.isNotEmpty()) {
+                        sClean == pClean
+                    } else {
+                        cleanSender.equals(rule.pattern.trim(), ignoreCase = true)
+                    }
+                    if (matches) {
                         return Pair(true, "Blacklist nomor SMS: ${rule.label}")
                     }
                 }
                 RuleType.PREFIX -> {
                     if (cleanSender.startsWith(rule.pattern)) {
                         return Pair(true, "Awalan pengirim terblokir: ${rule.pattern}")
+                    }
+                }
+                RuleType.CONTAINS -> {
+                    if (cleanSender.contains(rule.pattern, ignoreCase = true) || lowerBody.contains(rule.pattern.lowercase(Locale.ROOT))) {
+                        return Pair(true, "Mengandung pola: ${rule.pattern} (${rule.label.ifEmpty { "Aturan SMS" }})")
+                    }
+                }
+                RuleType.REGEX -> {
+                    try {
+                        val p = Pattern.compile(rule.pattern, Pattern.CASE_INSENSITIVE)
+                        if (p.matcher(cleanSender).find() || p.matcher(body).find()) {
+                            return Pair(true, "Cocok pola regex: ${rule.label.ifEmpty { rule.pattern }}")
+                        }
+                    } catch (_: Exception) {
                     }
                 }
                 else -> Unit
@@ -1074,10 +1095,20 @@ class BlockRepository private constructor(context: Context) {
                 for (r in activeRules) {
                     when (r.type) {
                         RuleType.KEYWORD -> if (lower.contains(r.pattern.lowercase(Locale.ROOT))) { matchingRule = r; break }
-                        RuleType.EXACT -> if (cleanNumber(trimmed) == cleanNumber(r.pattern)) { matchingRule = r; break }
+                        RuleType.EXACT -> {
+                            val sClean = cleanNumber(trimmed)
+                            val pClean = cleanNumber(r.pattern)
+                            val matches = if (sClean.isNotEmpty() && pClean.isNotEmpty()) {
+                                sClean == pClean
+                            } else {
+                                trimmed.equals(r.pattern.trim(), ignoreCase = true)
+                            }
+                            if (matches) { matchingRule = r; break }
+                        }
                         RuleType.PREFIX -> if (trimmed.startsWith(r.pattern)) { matchingRule = r; break }
+                        RuleType.CONTAINS -> if (trimmed.contains(r.pattern, ignoreCase = true)) { matchingRule = r; break }
                         RuleType.REGEX -> try {
-                            if (Pattern.compile(r.pattern).matcher(trimmed).find()) { matchingRule = r; break }
+                            if (Pattern.compile(r.pattern, Pattern.CASE_INSENSITIVE).matcher(trimmed).find()) { matchingRule = r; break }
                         } catch (e: Exception) {}
                         else -> Unit
                     }

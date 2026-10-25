@@ -120,4 +120,13 @@ class BlockRepositoryFilterTest {
         assertEquals(SmsSafetyCategory.SPAM_OR_PHISHING, cat2)
         assertNotNull(reason2)
     }
+
+    @Test
+    fun testTsurveyClassification() {
+        assertTrue("tsurvey.id harus dikenali sebagai official operator domain", BlockRepository.isTrustedOfficialDomain("tsurvey.id"))
+        val tsurveyMsg = "Isi survei berhadiah pulsa di https://tsurvey.id/survei-123. Jadilah responden terpilih!"
+        val (cat, reason) = BlockRepository.classifySafetyCategory("tsurvey", tsurveyMsg)
+        assertEquals(SmsSafetyCategory.PROMO_MARKETING, cat)
+        assertNull(reason)
+    }
 }

@@ -101,8 +101,6 @@ class HardcoreSmsReceiver : BroadcastReceiver() {
                 com.hardcorezblocker.app.data.model.SmsSafetyCategory.PROMO_MARKETING -> {
                     if (currentSettings.sendNotificationOnBlock && currentSettings.notifyPromoSms) {
                         sendPromoNotification(context, sender, completeMessage, strings)
-                    } else if (isDefaultSmsApp) {
-                        sendStandardIncomingSmsNotification(context, sender, completeMessage)
                     }
                 }
                 else -> {
