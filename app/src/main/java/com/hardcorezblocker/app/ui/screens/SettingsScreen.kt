@@ -489,35 +489,66 @@ fun SettingsScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
+        val (appVersionText, lastUpdateText) = remember(context) {
+            try {
+                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                val vName = pInfo.versionName ?: "1.0.3"
+                val vCode = androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(pInfo)
+                val sdf = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault())
+                val updatedStr = sdf.format(java.util.Date(pInfo.lastUpdateTime))
+                "v$vName (Build $vCode)" to updatedStr
+            } catch (_: Exception) {
+                "v1.0.3 (Build 4)" to "15 Nov 2026"
+            }
+        }
+
         Card(
             colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
-                .padding(bottom = 18.dp)
+                .padding(bottom = 28.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(PrimaryBlue.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sync,
+                            contentDescription = null,
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = strings.settingsExportTitle,
+                            text = "${strings.settingsExportTitle} & ${strings.settingsImportBtn}",
                             color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
                         Text(
-                            text = strings.settingsExportDesc,
+                            text = "${strings.settingsExportDesc} / ${strings.settingsImportDesc.lowercase()}",
                             color = TextSecondary,
                             fontSize = 12.sp,
                             lineHeight = 16.sp
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Button(
                         onClick = {
                             val json = viewModel.exportRules()
@@ -527,101 +558,34 @@ fun SettingsScreen(
                             exportedJsonPreview = json
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(42.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(strings.settingsExportBtn, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(strings.settingsExportBtn, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                     }
-                }
 
-                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = strings.settingsImportTitle,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            text = strings.settingsImportDesc,
-                            color = TextSecondary,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
                     OutlinedButton(
                         onClick = { showImportDialog = true },
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(42.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Icon(Icons.Default.Download, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.Download, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(15.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(strings.settingsImportBtn, color = PrimaryBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(strings.settingsImportBtn, color = PrimaryBlue, fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-            }
-        }
 
-        Card(
-            colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
-                .padding(bottom = 18.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ShieldActive.copy(alpha = 0.12f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PrivacyTip,
-                            contentDescription = null,
-                            tint = ShieldActive,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = strings.settingsPrivacyTitle,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = strings.settingsPrivacyDesc,
-                    color = TextSecondary,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp
-                )
-            }
-        }
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 14.dp))
 
-        Card(
-            colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
-                .padding(bottom = 24.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -663,6 +627,81 @@ fun SettingsScreen(
                     ) {
                         Text(strings.settingsTutorialBtn, color = PrimaryBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
+                }
+
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 14.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(ShieldActive.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PrivacyTip,
+                            contentDescription = null,
+                            tint = ShieldActive,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = strings.settingsPrivacyTitle,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = strings.settingsPrivacyDesc,
+                    color = TextSecondary,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp
+                )
+
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = strings.settingsVersion,
+                        color = TextSecondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = appVersionText,
+                        color = TextPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = strings.settingsLastUpdate,
+                        color = TextSecondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = lastUpdateText,
+                        color = TextPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.theme
+package com.hardcorezblocker.app.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -17,25 +17,25 @@ data class AppColors(
 )
 
 val LightAppColors = AppColors(
-    background = Color(0xFFF6F8FA),
+    background = Color(0xFFF1F5F9),
     surface = Color(0xFFFFFFFF),
     surfaceElevated = Color(0xFFFFFFFF),
-    surfaceVariant = Color(0xFFF1F5F9),
-    border = Color(0xFFE2E8F0),
+    surfaceVariant = Color(0xFFE8EEF6),
+    border = Color(0xFFCBD5E1),
     textPrimary = Color(0xFF0F172A),
-    textSecondary = Color(0xFF475569),
-    textMuted = Color(0xFF94A3B8),
+    textSecondary = Color(0xFF334155),
+    textMuted = Color(0xFF64748B),
     isDark = false
 )
 
 val DarkAppColors = AppColors(
-    background = Color(0xFF0B0F17),
-    surface = Color(0xFF131A26),
-    surfaceElevated = Color(0xFF1B2433),
-    surfaceVariant = Color(0xFF243044),
-    border = Color(0xFF2A364F),
+    background = Color(0xFF090D16),
+    surface = Color(0xFF111827),
+    surfaceElevated = Color(0xFF172033),
+    surfaceVariant = Color(0xFF1E293B),
+    border = Color(0xFF283548),
     textPrimary = Color(0xFFF8FAFC),
-    textSecondary = Color(0xFF94A3B8),
+    textSecondary = Color(0xFFCBD5E1),
     textMuted = Color(0xFF64748B),
     isDark = true
 )

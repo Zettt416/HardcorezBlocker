@@ -56,11 +56,15 @@ fun AppSearchBar(
 ) {
     Box(
         modifier = modifier
-            .height(42.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .height(46.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(DarkSurfaceElevated)
-            .border(1.dp, DarkBorder, RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp),
+            .border(
+                width = if (query.isNotEmpty()) 1.5.dp else 1.dp,
+                color = if (query.isNotEmpty()) PrimaryBlue.copy(alpha = 0.55f) else DarkBorder,
+                shape = RoundedCornerShape(14.dp)
+            )
+            .padding(horizontal = 14.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Row(
@@ -70,16 +74,16 @@ fun AppSearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Cari",
-                tint = TextSecondary,
-                modifier = Modifier.size(18.dp)
+                tint = if (query.isNotEmpty()) PrimaryBlue else TextSecondary,
+                modifier = Modifier.size(19.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Box(modifier = Modifier.weight(1f)) {
                 if (query.isEmpty()) {
                     Text(
                         text = placeholder,
                         color = TextMuted,
-                        fontSize = 13.sp,
+                        fontSize = 13.5.sp,
                         maxLines = 1
                     )
                 }
@@ -89,8 +93,8 @@ fun AppSearchBar(
                     singleLine = true,
                     textStyle = TextStyle(
                         color = TextPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Normal
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Medium
                     ),
                     cursorBrush = SolidColor(PrimaryBlue),
                     modifier = Modifier.fillMaxWidth()
@@ -100,7 +104,7 @@ fun AppSearchBar(
                 Spacer(modifier = Modifier.width(4.dp))
                 IconButton(
                     onClick = { onQueryChange("") },
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
@@ -122,13 +126,13 @@ fun AppFilterButton(
 ) {
     Box(
         modifier = modifier
-            .size(42.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isActive) PrimaryBlue.copy(alpha = 0.15f) else DarkSurfaceElevated)
+            .size(46.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (isActive) PrimaryBlue.copy(alpha = 0.16f) else DarkSurfaceElevated)
             .border(
-                1.dp,
-                if (isActive) PrimaryBlue.copy(alpha = 0.5f) else DarkBorder,
-                RoundedCornerShape(12.dp)
+                if (isActive) 1.5.dp else 1.dp,
+                if (isActive) PrimaryBlue.copy(alpha = 0.6f) else DarkBorder,
+                RoundedCornerShape(14.dp)
             )
             .clickable { onClick() },
         contentAlignment = Alignment.Center
@@ -143,7 +147,7 @@ fun AppFilterButton(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(5.dp)
+                    .padding(6.dp)
                     .size(7.dp)
                     .clip(CircleShape)
                     .background(PrimaryBlue)
@@ -259,7 +263,7 @@ fun ScreenContainer(
     val baseModifier = modifier
         .fillMaxSize()
         .background(DarkBackground)
-        .padding(horizontal = 20.dp, vertical = 4.dp)
+        .padding(horizontal = 16.dp, vertical = 6.dp)
 
     if (scrollable) {
         Column(

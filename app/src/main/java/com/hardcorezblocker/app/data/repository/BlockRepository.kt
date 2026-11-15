@@ -535,15 +535,28 @@ class BlockRepository private constructor(context: Context) {
             put(BlockDatabaseHelper.COL_LOG_SNIPPET, log.contentSnippet)
             put(BlockDatabaseHelper.COL_LOG_TIMESTAMP, log.timestamp)
         }
-        db.insert(BlockDatabaseHelper.TABLE_LOGS, null, cv)
+        db.insertWithOnConflict(BlockDatabaseHelper.TABLE_LOGS, null, cv, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
+        refreshLogs()
+    }
+
+    fun deleteLog(logId: String) {
+        if (logId.startsWith("calllog_")) {
+            val deletedSet = (prefs.getStringSet("deleted_calllog_ids", emptySet()) ?: emptySet()).toMutableSet()
+            deletedSet.add(logId)
+            prefs.edit().putStringSet("deleted_calllog_ids", deletedSet).apply()
+        }
+        val db = dbHelper.writableDatabase
+        db.delete(BlockDatabaseHelper.TABLE_LOGS, "${BlockDatabaseHelper.COL_LOG_ID} = ?", arrayOf(logId))
         refreshLogs()
     }
 
     fun clearLogs(channel: TargetChannel? = null) {
         val db = dbHelper.writableDatabase
         if (channel == null) {
+            prefs.edit().putLong("last_cleared_call_log_ts", System.currentTimeMillis()).apply()
             db.delete(BlockDatabaseHelper.TABLE_LOGS, null, null)
         } else if (channel == TargetChannel.CALL_ONLY) {
+            prefs.edit().putLong("last_cleared_call_log_ts", System.currentTimeMillis()).apply()
             db.delete(
                 BlockDatabaseHelper.TABLE_LOGS,
                 "${BlockDatabaseHelper.COL_LOG_CHANNEL} = ? OR ${BlockDatabaseHelper.COL_LOG_CHANNEL} = ?",
@@ -555,6 +568,125 @@ class BlockRepository private constructor(context: Context) {
                 "${BlockDatabaseHelper.COL_LOG_CHANNEL} = ?",
                 arrayOf(TargetChannel.SMS_ONLY.name)
             )
+        }
+        refreshLogs()
+    }
+
+    fun syncSystemBlockedCalls(context: Context) {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.READ_CALL_LOG
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            refreshLogs()
+            return
+        }
+
+        val lastClearedTs = prefs.getLong("last_cleared_call_log_ts", 0L)
+        val deletedIds = prefs.getStringSet("deleted_calllog_ids", emptySet()) ?: emptySet()
+        val existingCallLogs = _logsFlow.value.filter {
+            it.channel == TargetChannel.CALL_ONLY || it.channel == TargetChannel.BOTH
+        }
+
+        val projection = arrayOf(
+            android.provider.CallLog.Calls.NUMBER,
+            android.provider.CallLog.Calls.TYPE,
+            android.provider.CallLog.Calls.DATE,
+            android.provider.CallLog.Calls.DURATION
+        )
+
+        val newLogs = mutableListOf<BlockedLog>()
+        try {
+            val cursor = context.contentResolver.query(
+                android.provider.CallLog.Calls.CONTENT_URI,
+                projection,
+                if (lastClearedTs > 0L) "${android.provider.CallLog.Calls.DATE} > ?" else null,
+                if (lastClearedTs > 0L) arrayOf(lastClearedTs.toString()) else null,
+                "${android.provider.CallLog.Calls.DATE} DESC"
+            )
+            cursor?.use { c ->
+                val numCol = c.getColumnIndexOrThrow(android.provider.CallLog.Calls.NUMBER)
+                val typeCol = c.getColumnIndexOrThrow(android.provider.CallLog.Calls.TYPE)
+                val dateCol = c.getColumnIndexOrThrow(android.provider.CallLog.Calls.DATE)
+                val durCol = c.getColumnIndexOrThrow(android.provider.CallLog.Calls.DURATION)
+
+                var inspected = 0
+                while (c.moveToNext() && inspected < 200) {
+                    inspected++
+                    val rawNumber = c.getString(numCol)?.trim().orEmpty()
+                    val type = c.getInt(typeCol)
+                    val date = c.getLong(dateCol)
+                    val duration = c.getLong(durCol)
+
+                    if (type != android.provider.CallLog.Calls.BLOCKED_TYPE &&
+                        type != android.provider.CallLog.Calls.REJECTED_TYPE
+                    ) {
+                        continue
+                    }
+
+                    val (wouldBlock, evalReason) = evaluateIncomingCall(context, rawNumber)
+                    val isBlockedCall = type == android.provider.CallLog.Calls.BLOCKED_TYPE ||
+                        (type == android.provider.CallLog.Calls.REJECTED_TYPE && duration == 0L && (wouldBlock || !isNumberInContacts(context, rawNumber)))
+
+                    if (!isBlockedCall) continue
+
+                    val displayNum = rawNumber.ifEmpty { "Unknown / Hidden" }
+                    val normNum = normalizePhoneForMatch(displayNum)
+                    val syncId = "calllog_${date}_${normNum.ifEmpty { "hidden" }}"
+                    if (syncId in deletedIds) continue
+
+                    val alreadyRecorded = existingCallLogs.any { existing ->
+                        existing.id == syncId ||
+                            (normalizePhoneForMatch(existing.senderOrNumber) == normNum &&
+                                kotlin.math.abs(existing.timestamp - date) < 30_000L)
+                    } || newLogs.any { added ->
+                        added.id == syncId ||
+                            (normalizePhoneForMatch(added.senderOrNumber) == normNum &&
+                                kotlin.math.abs(added.timestamp - date) < 30_000L)
+                    }
+                    if (alreadyRecorded) continue
+
+                    val finalReason = when {
+                        wouldBlock -> evalReason
+                        type == android.provider.CallLog.Calls.BLOCKED_TYPE -> "Panggilan diblokir otomatis di tingkat sistem"
+                        else -> "Panggilan nomor tak dikenal ditolak"
+                    }
+
+                    newLogs.add(
+                        BlockedLog(
+                            id = syncId,
+                            senderOrNumber = displayNum,
+                            channel = TargetChannel.CALL_ONLY,
+                            reason = finalReason,
+                            contentSnippet = null,
+                            timestamp = date
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HardcorezBlocker", "syncSystemBlockedCalls gagal", e)
+        }
+
+        if (newLogs.isNotEmpty()) {
+            val db = dbHelper.writableDatabase
+            db.beginTransaction()
+            try {
+                for (log in newLogs) {
+                    val cv = ContentValues().apply {
+                        put(BlockDatabaseHelper.COL_LOG_ID, log.id)
+                        put(BlockDatabaseHelper.COL_LOG_SENDER, log.senderOrNumber)
+                        put(BlockDatabaseHelper.COL_LOG_CHANNEL, log.channel.name)
+                        put(BlockDatabaseHelper.COL_LOG_REASON, log.reason)
+                        put(BlockDatabaseHelper.COL_LOG_SNIPPET, log.contentSnippet)
+                        put(BlockDatabaseHelper.COL_LOG_TIMESTAMP, log.timestamp)
+                    }
+                    db.insertWithOnConflict(BlockDatabaseHelper.TABLE_LOGS, null, cv, android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE)
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
         }
         refreshLogs()
     }
@@ -584,7 +716,7 @@ class BlockRepository private constructor(context: Context) {
         }
 
         val number = rawNumber?.trim() ?: ""
-        if (number.isEmpty()) {
+        if (number.isEmpty() || number.equals("Unknown / Hidden", ignoreCase = true)) {
             return Pair(true, "Nomor tersembunyi / Private Number")
         }
 
@@ -593,42 +725,45 @@ class BlockRepository private constructor(context: Context) {
             return Pair(false, "Nomor tersimpan di buku kontak (Aman)")
         }
 
-        if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) {
-            return Pair(true, "Nomor tidak terdaftar di buku kontak (Hardcore Protection)")
-        }
-
-        if (settings.blockForeignNumbers && number.startsWith("+") && !number.startsWith("+62")) {
-            return Pair(true, "Nomor dari luar negeri / VoIP ($number)")
-        }
-
+        val normInput = normalizePhoneForMatch(number)
         val activeRules = rulesFlow.value.filter { it.isEnabled && (it.channel == TargetChannel.CALL_ONLY || it.channel == TargetChannel.BOTH) }
         for (rule in activeRules) {
+            val normPattern = normalizePhoneForMatch(rule.pattern)
             when (rule.type) {
                 RuleType.EXACT -> {
-                    if (cleanNumber(number) == cleanNumber(rule.pattern)) {
+                    if (cleanNumber(number) == cleanNumber(rule.pattern) || (normInput.isNotEmpty() && normInput == normPattern)) {
                         return Pair(true, "Blacklist nomor: ${rule.label.ifEmpty { rule.pattern }}")
                     }
                 }
                 RuleType.PREFIX -> {
-                    if (number.startsWith(rule.pattern)) {
-                        return Pair(true, "Awalan terblokir: ${rule.pattern} (${rule.label})")
+                    if (number.startsWith(rule.pattern) || (normPattern.isNotEmpty() && normInput.startsWith(normPattern))) {
+                        val labelSuffix = if (rule.label.isNotEmpty()) " (${rule.label})" else ""
+                        return Pair(true, "Awalan terblokir: ${rule.pattern}$labelSuffix")
                     }
                 }
                 RuleType.CONTAINS -> {
-                    if (number.contains(rule.pattern)) {
+                    if (number.contains(rule.pattern) || (normPattern.isNotEmpty() && normInput.contains(normPattern))) {
                         return Pair(true, "Mengandung pola angka: ${rule.pattern}")
                     }
                 }
                 RuleType.REGEX -> {
                     try {
                         if (Pattern.compile(rule.pattern).matcher(number).find()) {
-                            return Pair(true, "Cocok pola regex: ${rule.label}")
+                            return Pair(true, "Cocok pola regex: ${rule.label.ifEmpty { rule.pattern }}")
                         }
                     } catch (e: Exception) {
                     }
                 }
                 else -> Unit
             }
+        }
+
+        if (settings.blockForeignNumbers && number.startsWith("+") && !number.startsWith("+62")) {
+            return Pair(true, "Nomor dari luar negeri / VoIP ($number)")
+        }
+
+        if (settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY) {
+            return Pair(true, "Nomor tidak terdaftar di buku kontak (Hardcore Protection)")
         }
 
         return Pair(false, "Lolos filter (Aman)")
@@ -1240,5 +1375,14 @@ class BlockRepository private constructor(context: Context) {
 
     private fun cleanNumber(num: String): String {
         return num.replace(CLEAN_NUMBER_REGEX, "")
+    }
+
+    fun normalizePhoneForMatch(num: String): String {
+        val cleaned = cleanNumber(num)
+        return when {
+            cleaned.startsWith("+62") -> "0" + cleaned.removePrefix("+62")
+            cleaned.startsWith("628") -> "0" + cleaned.removePrefix("62")
+            else -> cleaned
+        }
     }
 }

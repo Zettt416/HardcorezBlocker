@@ -75,13 +75,13 @@ class HardcoreCallScreeningService : CallScreeningService() {
         val handle = details.handle
         if (handle != null) {
             val part = handle.schemeSpecificPart
-            if (!part.isNullOrBlank()) return part
+            if (!part.isNullOrBlank()) return android.net.Uri.decode(part).trim()
         }
 
         val extras = details.intentExtras
         if (extras != null) {
             val addr = extras.getString("android.telecom.extra.INCOMING_CALL_ADDRESS")
-            if (!addr.isNullOrBlank()) return addr
+            if (!addr.isNullOrBlank()) return android.net.Uri.decode(addr).trim()
         }
 
         return null
@@ -92,6 +92,7 @@ class HardcoreCallScreeningService : CallScreeningService() {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("EXTRA_TAB", "LOGS")
+            putExtra("EXTRA_LOG_FILTER", "CALL_ONLY")
         }
         val pendingIntent = PendingIntent.getActivity(
             this,

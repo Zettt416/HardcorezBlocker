@@ -91,6 +91,8 @@ fun SmsDetailBottomSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .imePadding()
         ) {
 
             Row(

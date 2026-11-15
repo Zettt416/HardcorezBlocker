@@ -44,12 +44,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         checkCallScreeningRole()
         checkDefaultSmsRole()
         refreshInbox()
+        refreshLogs()
     }
 
     fun refreshInbox() {
         viewModelScope.launch(Dispatchers.IO) {
             val list = repository.readInboxSms(getApplication())
             _inboxMessages.value = list
+        }
+    }
+
+    fun refreshLogs() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.syncSystemBlockedCalls(getApplication())
         }
     }
 
@@ -192,6 +199,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearLogs(channel: TargetChannel? = null) {
         repository.clearLogs(channel)
+    }
+
+    fun deleteLog(logId: String) {
+        repository.deleteLog(logId)
     }
 
     fun testSimulation(input: String, isSms: Boolean): com.hardcorezblocker.app.data.repository.BlockRepository.SimulationResult {

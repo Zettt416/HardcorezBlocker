@@ -206,6 +206,15 @@ interface Strings {
     val logsClearSmsOnly: (Int) -> String
     val logsReasonPrefix: String
     val logsContentPrefix: String
+    val logDetailCallBadge: String
+    val logDetailSmsBadge: String
+    val logDetailReasonTitle: String
+    val logDetailAddBlacklistBtn: String
+    val logDetailAlreadyBlacklisted: String
+    val logDetailSaveContactBtn: String
+    val logDetailCopyNumberBtn: String
+    val logDetailDeleteBtn: String
+    val toastLogDeleted: String
 
     val settingsTitle: String
     val settingsSubtitle: String
@@ -274,6 +283,7 @@ interface Strings {
     val settingsPrivacyTitle: String
     val settingsPrivacyDesc: String
     val settingsVersion: String
+    val settingsLastUpdate: String
 
     val dialogAddRuleTitle: String
     val dialogEditRuleTitle: String
@@ -554,6 +564,15 @@ object IndonesianStrings : Strings {
     override val logsClearSmsOnly: (Int) -> String = { count -> "Hanya SMS ($count)" }
     override val logsReasonPrefix = "Alasan: "
     override val logsContentPrefix = "Isi Pesan: "
+    override val logDetailCallBadge = "Panggilan Diblokir"
+    override val logDetailSmsBadge = "SMS Diblokir"
+    override val logDetailReasonTitle = "Alasan Pemblokiran"
+    override val logDetailAddBlacklistBtn = "Masukkan ke Blacklist Permanen"
+    override val logDetailAlreadyBlacklisted = "Nomor Sudah di Blacklist"
+    override val logDetailSaveContactBtn = "Simpan Kontak"
+    override val logDetailCopyNumberBtn = "Salin Nomor"
+    override val logDetailDeleteBtn = "Hapus Riwayat"
+    override val toastLogDeleted = "Catatan riwayat dihapus"
 
     override val settingsTitle = "Pengaturan & Sistem"
     override val settingsSubtitle = "Tema antarmuka, bahasa, hak akses, dan privasi"
@@ -622,6 +641,7 @@ object IndonesianStrings : Strings {
     override val settingsPrivacyTitle = "100% Offline & Terenkripsi"
     override val settingsPrivacyDesc = "Aplikasi ini beroperasi tanpa server cloud eksternal. Semua kontak, aturan, dan riwayat pemblokiran diproses langsung di perangkat Anda demi menjaga kerahasiaan data pribadi."
     override val settingsVersion = "Versi Aplikasi"
+    override val settingsLastUpdate = "Terakhir Diperbarui"
 
     override val dialogAddRuleTitle = "Tambah Aturan"
     override val dialogEditRuleTitle = "Edit Aturan"
@@ -902,6 +922,15 @@ object EnglishStrings : Strings {
     override val logsClearSmsOnly: (Int) -> String = { count -> "SMS Only ($count)" }
     override val logsReasonPrefix = "Reason: "
     override val logsContentPrefix = "Content: "
+    override val logDetailCallBadge = "Blocked Call"
+    override val logDetailSmsBadge = "Blocked SMS"
+    override val logDetailReasonTitle = "Blocking Reason"
+    override val logDetailAddBlacklistBtn = "Add to Permanent Blacklist"
+    override val logDetailAlreadyBlacklisted = "Already in Blacklist"
+    override val logDetailSaveContactBtn = "Save Contact"
+    override val logDetailCopyNumberBtn = "Copy Number"
+    override val logDetailDeleteBtn = "Delete Log"
+    override val toastLogDeleted = "Log entry deleted"
 
     override val settingsTitle = "Settings & System"
     override val settingsSubtitle = "App theme, language, permissions, and privacy"
@@ -970,6 +999,7 @@ object EnglishStrings : Strings {
     override val settingsPrivacyTitle = "100% Offline & Encrypted"
     override val settingsPrivacyDesc = "This app operates without external cloud servers. All contacts, rules, and block history are processed locally on your device to protect your privacy."
     override val settingsVersion = "App Version"
+    override val settingsLastUpdate = "Last Updated"
 
     override val dialogAddRuleTitle = "Add Rule"
     override val dialogEditRuleTitle = "Edit Rule"

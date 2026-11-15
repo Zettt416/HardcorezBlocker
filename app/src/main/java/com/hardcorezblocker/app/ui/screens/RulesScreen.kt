@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.screens
+package com.hardcorezblocker.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -8,9 +8,11 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -166,6 +168,7 @@ fun RulesScreen(viewModel: MainViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
                     .padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -192,33 +195,42 @@ fun RulesScreen(viewModel: MainViewModel) {
                 )
             }
 
-            RuleGuidelineCard(
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            if (filteredRules.isEmpty()) {
-                if (searchQuery.isNotBlank()) {
-                    AppEmptyState(
-                        icon = Icons.Default.SearchOff,
-                        title = strings.rulesSearchNotFoundTitle,
-                        description = strings.rulesSearchNotFoundDesc(searchQuery),
-                        modifier = Modifier.weight(1f),
-                        accentColor = PrimaryBlue
-                    )
-                } else {
-                    AppEmptyState(
-                        icon = Icons.Default.RuleFolder,
-                        title = strings.rulesEmptyTitle,
-                        description = strings.rulesEmptyDesc,
-                        modifier = Modifier.weight(1f)
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(bottom = 88.dp)
+            ) {
+                item(key = "rule_guideline_card") {
+                    RuleGuidelineCard(
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(bottom = 88.dp)
-                ) {
+
+                if (filteredRules.isEmpty()) {
+                    item(key = "rules_empty_state") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 36.dp, bottom = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (searchQuery.isNotBlank()) {
+                                AppEmptyState(
+                                    icon = Icons.Default.SearchOff,
+                                    title = strings.rulesSearchNotFoundTitle,
+                                    description = strings.rulesSearchNotFoundDesc(searchQuery),
+                                    accentColor = PrimaryBlue
+                                )
+                            } else {
+                                AppEmptyState(
+                                    icon = Icons.Default.RuleFolder,
+                                    title = strings.rulesEmptyTitle,
+                                    description = strings.rulesEmptyDesc
+                                )
+                            }
+                        }
+                    }
+                } else {
                     items(filteredRules, key = { it.id }) { rule ->
                         RuleItemCard(
                             rule = rule,
@@ -304,7 +316,7 @@ fun RuleGuidelineCard(
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = strings.rulesGuidelineTitle,
                             color = TextPrimary,

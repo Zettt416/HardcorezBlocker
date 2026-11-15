@@ -1,4 +1,4 @@
-﻿package com.hardcorezblocker.app.ui.components
+package com.hardcorezblocker.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -57,12 +59,15 @@ fun AddRuleDialog(
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .systemBarsPadding()
+                .imePadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp)
                 .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 20.dp)
             ) {
 

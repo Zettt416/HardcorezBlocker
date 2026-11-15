@@ -12,8 +12,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -77,6 +80,7 @@ class MainActivity : ComponentActivity() {
         viewModel.checkCallScreeningRole()
         viewModel.checkDefaultSmsRole()
         viewModel.refreshInbox()
+        viewModel.refreshLogs()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -140,6 +144,7 @@ class MainActivity : ComponentActivity() {
         viewModel.checkCallScreeningRole()
         viewModel.checkDefaultSmsRole()
         viewModel.refreshInbox()
+        viewModel.refreshLogs()
     }
 
     private fun requestSmsRole() {
@@ -197,6 +202,7 @@ fun MainAppScreen(
     val context = LocalContext.current
     val strings = LocalAppStrings.current
     var selectedTab by remember { mutableStateOf(initialTab) }
+    var logsChannelFilter by remember { mutableStateOf<TargetChannel?>(null) }
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
     BackHandler {
@@ -232,6 +238,12 @@ fun MainAppScreen(
         if (intent?.getBooleanExtra("FILTER_THREATS", false) == true) {
             selectedTab = NavigationTab.INBOX
         }
+        val extraLogFilter = intent?.getStringExtra("EXTRA_LOG_FILTER")
+        if (extraLogFilter.equals("CALL_ONLY", ignoreCase = true)) {
+            logsChannelFilter = TargetChannel.CALL_ONLY
+        } else if (extraLogFilter.equals("SMS_ONLY", ignoreCase = true)) {
+            logsChannelFilter = TargetChannel.SMS_ONLY
+        }
     }
 
     LaunchedEffect(unreadThreats, unreadTotalCount, settings.sendNotificationOnBlock, settings.notifyThreatSms) {
@@ -247,11 +259,14 @@ fun MainAppScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = DarkBackground,
+        contentWindowInsets = WindowInsets.safeDrawing,
         bottomBar = {
             NavigationBar(
                 containerColor = DarkSurfaceElevated,
                 tonalElevation = 0.dp,
-                modifier = Modifier.border(1.dp, DarkBorder, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                modifier = Modifier
+                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                    .border(1.dp, DarkBorder, RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             ) {
                 listOf(NavigationTab.DASHBOARD, NavigationTab.INBOX, NavigationTab.RULES, NavigationTab.LOGS, NavigationTab.SETTINGS).forEach { tab ->
                     val isSelected = selectedTab == tab
@@ -298,7 +313,7 @@ fun MainAppScreen(
                                 Icon(
                                     imageVector = tab.icon,
                                     contentDescription = tabTitle,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(21.dp)
                                 )
                             }
                         },
@@ -306,7 +321,7 @@ fun MainAppScreen(
                             Text(
                                 text = tabTitle,
                                 fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
@@ -314,7 +329,7 @@ fun MainAppScreen(
                             selectedTextColor = PrimaryBlue,
                             unselectedIconColor = TextMuted,
                             unselectedTextColor = TextSecondary,
-                            indicatorColor = PrimaryBlue.copy(alpha = 0.12f)
+                            indicatorColor = PrimaryBlue.copy(alpha = 0.14f)
                         )
                     )
                 }
@@ -332,7 +347,11 @@ fun MainAppScreen(
                     viewModel = viewModel,
                     onRequestRole = onRequestRole,
                     onRequestSmsRole = onRequestSmsRole,
-                    onNavigateToTab = { selectedTab = it }
+                    onNavigateToTab = { selectedTab = it },
+                    onNavigateToLogsWithFilter = { channelFilter ->
+                        logsChannelFilter = channelFilter
+                        selectedTab = NavigationTab.LOGS
+                    }
                 )
                 NavigationTab.INBOX -> {
                     LaunchedEffect(Unit) {
@@ -384,7 +403,9 @@ fun MainAppScreen(
                     viewModel = viewModel
                 )
                 NavigationTab.LOGS -> LogsScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    initialChannelFilter = logsChannelFilter,
+                    onFilterChanged = { logsChannelFilter = it }
                 )
                 NavigationTab.SETTINGS -> SettingsScreen(
                     viewModel = viewModel,

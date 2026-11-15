@@ -48,7 +48,8 @@ fun DashboardScreen(
     viewModel: MainViewModel,
     onRequestRole: () -> Unit,
     onRequestSmsRole: () -> Unit,
-    onNavigateToTab: (NavigationTab) -> Unit
+    onNavigateToTab: (NavigationTab) -> Unit,
+    onNavigateToLogsWithFilter: (TargetChannel?) -> Unit = { onNavigateToTab(NavigationTab.LOGS) }
 ) {
     val strings = LocalAppStrings.current
     val settings by viewModel.settings.collectAsState()
@@ -403,7 +404,8 @@ fun DashboardScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(4.dp)
+                            .padding(5.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         val isHardcoreSelected = settings.mode == BlockingMode.HARDCORE_CONTACTS_ONLY && isShieldActive
                         val isSmartSelected = settings.mode == BlockingMode.SMART_FILTER && isShieldActive
@@ -412,17 +414,19 @@ fun DashboardScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isHardcoreSelected) ShieldActive.copy(alpha = 0.22f) else Color.Transparent)
+                                .background(
+                                    if (isHardcoreSelected) ShieldActive else Color.Transparent
+                                )
                                 .border(
-                                    width = if (isHardcoreSelected) 1.5.dp else 0.dp,
-                                    color = if (isHardcoreSelected) ShieldActive else Color.Transparent,
+                                    width = if (isHardcoreSelected) 0.dp else 1.dp,
+                                    color = if (isHardcoreSelected) Color.Transparent else DarkBorder.copy(alpha = 0.6f),
                                     shape = RoundedCornerShape(10.dp)
                                 )
                                 .clickable {
                                     viewModel.setProtectionActive(true)
                                     viewModel.setBlockingMode(BlockingMode.HARDCORE_CONTACTS_ONLY)
                                 }
-                                .padding(vertical = 9.dp, horizontal = 6.dp),
+                                .padding(vertical = 10.dp, horizontal = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
@@ -434,10 +438,10 @@ fun DashboardScreen(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Lock,
+                                        imageVector = if (isHardcoreSelected) Icons.Default.VerifiedUser else Icons.Default.Lock,
                                         contentDescription = null,
-                                        tint = if (isHardcoreSelected) ShieldActive else TextSecondary,
-                                        modifier = Modifier.size(14.dp)
+                                        tint = if (isHardcoreSelected) Color.White else TextSecondary,
+                                        modifier = Modifier.size(15.dp)
                                     )
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
@@ -453,29 +457,29 @@ fun DashboardScreen(
                                     text = strings.dashModeHardcoreSub,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = if (isHardcoreSelected) ShieldActive else TextMuted,
+                                    color = if (isHardcoreSelected) Color.White.copy(alpha = 0.90f) else TextMuted,
                                     maxLines = 1
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(4.dp))
-
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSmartSelected) PrimaryBlue.copy(alpha = 0.22f) else Color.Transparent)
+                                .background(
+                                    if (isSmartSelected) PrimaryBlue else Color.Transparent
+                                )
                                 .border(
-                                    width = if (isSmartSelected) 1.5.dp else 0.dp,
-                                    color = if (isSmartSelected) PrimaryBlue else Color.Transparent,
+                                    width = if (isSmartSelected) 0.dp else 1.dp,
+                                    color = if (isSmartSelected) Color.Transparent else DarkBorder.copy(alpha = 0.6f),
                                     shape = RoundedCornerShape(10.dp)
                                 )
                                 .clickable {
                                     viewModel.setProtectionActive(true)
                                     viewModel.setBlockingMode(BlockingMode.SMART_FILTER)
                                 }
-                                .padding(vertical = 9.dp, horizontal = 6.dp),
+                                .padding(vertical = 10.dp, horizontal = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
@@ -487,10 +491,10 @@ fun DashboardScreen(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.FilterAlt,
+                                        imageVector = if (isSmartSelected) Icons.Default.CheckCircle else Icons.Default.FilterAlt,
                                         contentDescription = null,
-                                        tint = if (isSmartSelected) PrimaryBlue else TextSecondary,
-                                        modifier = Modifier.size(14.dp)
+                                        tint = if (isSmartSelected) Color.White else TextSecondary,
+                                        modifier = Modifier.size(15.dp)
                                     )
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
@@ -506,7 +510,7 @@ fun DashboardScreen(
                                     text = strings.dashModeSmartSub,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = if (isSmartSelected) PrimaryBlue else TextMuted,
+                                    color = if (isSmartSelected) Color.White.copy(alpha = 0.90f) else TextMuted,
                                     maxLines = 1
                                 )
                             }
@@ -566,7 +570,7 @@ fun DashboardScreen(
                 actionHint = "${strings.tabLogs} ➜",
                 icon = Icons.AutoMirrored.Filled.PhoneMissed,
                 color = DangerRed,
-                onClick = { onNavigateToTab(NavigationTab.LOGS) },
+                onClick = { onNavigateToLogsWithFilter(TargetChannel.CALL_ONLY) },
                 modifier = Modifier.weight(1f)
             )
             InteractiveStatCard(
@@ -612,7 +616,7 @@ fun DashboardScreen(
                     color = PrimaryBlue,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable { onNavigateToTab(NavigationTab.LOGS) }
+                    modifier = Modifier.clickable { onNavigateToLogsWithFilter(null) }
                 )
             }
         }
@@ -671,9 +675,15 @@ fun DashboardScreen(
                     .padding(bottom = 16.dp)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    val recentLogs = logs.take(2)
+                    val recentLogs = logs.take(3)
                     recentLogs.forEachIndexed { index, log ->
-                        RecentLogMiniRow(log = log)
+                        val isCallLog = log.channel == TargetChannel.CALL_ONLY || log.channel == TargetChannel.BOTH
+                        RecentLogMiniRow(
+                            log = log,
+                            onClick = {
+                                onNavigateToLogsWithFilter(if (isCallLog) TargetChannel.CALL_ONLY else TargetChannel.SMS_ONLY)
+                            }
+                        )
                         if (index < recentLogs.size - 1) {
                             HorizontalDivider(
                                 color = DarkBorder,
@@ -741,14 +751,22 @@ private fun InteractiveStatCard(
 ) {
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.05f)),
+        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
         shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(1.2.dp, color.copy(alpha = 0.30f)),
+        border = androidx.compose.foundation.BorderStroke(1.2.dp, color.copy(alpha = 0.28f)),
         modifier = modifier
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            color.copy(alpha = 0.08f),
+                            Color.Transparent
+                        )
+                    )
+                )
                 .padding(12.dp)
         ) {
             Row(
@@ -759,29 +777,36 @@ private fun InteractiveStatCard(
                 Box(
                     modifier = Modifier
                         .size(34.dp)
-                        .clip(CircleShape)
-                        .background(color.copy(alpha = 0.16f))
-                        .border(1.dp, color.copy(alpha = 0.35f), CircleShape),
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(color.copy(alpha = 0.14f))
+                        .border(1.dp, color.copy(alpha = 0.32f), RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
                         tint = color,
-                        modifier = Modifier.size(17.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = color.copy(alpha = 0.85f),
-                    modifier = Modifier.size(13.dp)
-                )
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = color.copy(alpha = 0.10f)
+                ) {
+                    Text(
+                        text = actionHint,
+                        color = color,
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = count,
-                color = color,
+                color = TextPrimary,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 24.sp
             )
@@ -790,63 +815,101 @@ private fun InteractiveStatCard(
                 text = subtitle,
                 color = TextSecondary,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 minLines = 2,
-                lineHeight = 14.sp
+                lineHeight = 13.5.sp
             )
         }
     }
 }
 
 @Composable
-private fun RecentLogMiniRow(log: BlockedLog) {
+private fun RecentLogMiniRow(
+    log: BlockedLog,
+    onClick: () -> Unit = {}
+) {
+    val strings = LocalAppStrings.current
     val isCall = log.channel == TargetChannel.CALL_ONLY || log.channel == TargetChannel.BOTH
+    val accentColor = if (isCall) DangerRed else WarningAmber
     val timeFormatted = remember(log.timestamp) {
-        SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(log.timestamp))
+        SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault()).format(Date(log.timestamp))
     }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable { onClick() }
+            .padding(vertical = 4.dp, horizontal = 2.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(28.dp)
-                .clip(CircleShape)
-                .background(if (isCall) DangerRed.copy(alpha = 0.12f) else WarningAmber.copy(alpha = 0.12f)),
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(accentColor.copy(alpha = 0.12f))
+                .border(1.dp, accentColor.copy(alpha = 0.28f), RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = if (isCall) Icons.AutoMirrored.Filled.PhoneMissed else Icons.Default.SmsFailed,
                 contentDescription = null,
-                tint = if (isCall) DangerRed else WarningAmber,
-                modifier = Modifier.size(14.dp)
+                tint = accentColor,
+                modifier = Modifier.size(16.dp)
             )
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = log.senderOrNumber,
-                color = TextPrimary,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = log.senderOrNumber,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = accentColor.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = if (isCall) strings.calls else strings.sms,
+                        color = accentColor,
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = log.reason,
-                color = TextMuted,
+                color = TextSecondary,
                 fontSize = 11.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = timeFormatted,
             color = TextMuted,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = TextMuted,
+            modifier = Modifier.size(16.dp)
         )
     }
 }

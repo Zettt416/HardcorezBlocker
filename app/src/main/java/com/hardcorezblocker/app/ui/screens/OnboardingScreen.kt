@@ -1,5 +1,6 @@
-﻿package com.hardcorezblocker.app.ui.screens
+package com.hardcorezblocker.app.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,12 +14,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -80,46 +84,55 @@ fun OnboardingScreen(
     var currentStep by remember { mutableIntStateOf(0) }
     val totalSteps = 3
 
+    BackHandler {
+        if (currentStep > 0) {
+            currentStep--
+        } else {
+            onFinished()
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBackground)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(top = 6.dp, bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = DarkSurfaceVariant,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+                    color = PrimaryBlue.copy(alpha = 0.12f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.35f))
                 ) {
                     Text(
                         text = strings.stepOf(currentStep + 1, totalSteps),
-                        color = TextSecondary,
+                        color = PrimaryBlue,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
                     )
                 }
 
                 if (currentStep < totalSteps - 1) {
                     TextButton(
                         onClick = onFinished,
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = strings.skip,
-                            color = TextMuted,
+                            color = TextSecondary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -127,7 +140,7 @@ fun OnboardingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Box(
                 modifier = Modifier
@@ -137,6 +150,7 @@ fun OnboardingScreen(
                 AnimatedContent(
                     targetState = currentStep,
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    modifier = Modifier.fillMaxSize(),
                     label = "tutorial_step"
                 ) { step ->
                     when (step) {
@@ -150,7 +164,7 @@ fun OnboardingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp)
+                    .padding(top = 10.dp, bottom = 8.dp)
             ) {
 
                 Row(
@@ -294,6 +308,8 @@ private fun StepWelcome() {
             title = strings.onbFeat3Title,
             description = strings.onbFeat3Desc
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -304,6 +320,7 @@ private fun StepModes() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(bottom = 16.dp)
     ) {
         Text(
             text = strings.onbStep2Title,
@@ -343,7 +360,7 @@ private fun StepModes() {
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = strings.dashModeHardcore,
@@ -403,7 +420,7 @@ private fun StepModes() {
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = strings.dashModeSmart,
                             color = TextPrimary,
@@ -444,6 +461,7 @@ private fun StepPermissions() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(bottom = 16.dp)
     ) {
         Text(
             text = strings.onbStep3Title,
